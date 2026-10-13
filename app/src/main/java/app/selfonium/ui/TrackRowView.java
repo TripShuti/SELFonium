@@ -15,7 +15,7 @@ import java.util.function.Consumer;
 /** Both actions belong to the bound row; an AdapterView item-click is not required. */
 final class TrackRowView extends LinearLayout {
     private final CoverView cover;
-    private final TextView title, artist, duration;
+    private final TextView title, artist, duration,number;
     final IconButton overflow;
     private Track track;
     private Runnable playAction;
@@ -34,6 +34,8 @@ final class TrackRowView extends LinearLayout {
         setOnClickListener(view -> { if (playAction != null) playAction.run(); });
         setOnLongClickListener(view -> { openMenu(); return true; });
 
+        number=Ui.text(context,"",12,Ui.MUTED);number.setGravity(Gravity.CENTER);number.setVisibility(GONE);
+        addView(number,new LayoutParams(Ui.dp(context,32),Ui.dp(context,48)));
         cover = new CoverView(context);
         addView(cover, new LayoutParams(Ui.dp(context, 48), Ui.dp(context, 48)));
         LinearLayout labels = Ui.column(context);
@@ -65,14 +67,16 @@ final class TrackRowView extends LinearLayout {
         playAction = play;
         menuAction = menu;
         cover.bind(value);
-        title.setText(value.title);
-        artist.setText(value.artist + " · " + value.album);
+        title.setText(Ui.name(value.title));
+        artist.setText(value.artist + " · " + Ui.album(value.album));
+        albumPosition(0);
         duration.setText(value.durationMs > 0 ? Protocol.time(value.durationMs) : "");
         setContentDescription(value.title + ", " + value.artist);
         overflow.setContentDescription("Дії з композицією «" + value.title + "»");
     }
 
-    void nowPlaying(boolean playing) { setActivated(playing); title.setTextColor(playing ? Ui.ACCENT : Ui.TEXT); }
+    void albumPosition(int position){number.setText(Integer.toString(position));number.setVisibility(position>0?VISIBLE:GONE);cover.setVisibility(position>0?GONE:VISIBLE);if(position>0&&track!=null)artist.setText(track.artist);}
+    void nowPlaying(boolean playing) { setActivated(playing); title.setTextColor(playing ? Ui.ACCENT : Ui.TEXT);number.setTextColor(playing?Ui.ACCENT:Ui.MUTED); }
 
     private void openMenu() {
         if (track != null && menuAction != null) menuAction.accept(track);

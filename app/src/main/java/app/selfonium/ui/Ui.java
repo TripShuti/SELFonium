@@ -12,7 +12,13 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 final class Ui {
-    static final int BG=0xFF141218,SURFACE=0xFF211F26,RAISED=0xFF2B2930,ACCENT=0xFFD0BCFE,TEXT=0xFFE6E0E9,MUTED=0xFFCAC4D0,ON_ACCENT=0xFF381E72;
+    static final int BG=0xFF101216,SURFACE=0xFF1A1D24,RAISED=0xFF252932,ACCENT=0xFFCDBBFA,TEXT=0xFFF1F0F5,MUTED=0xFFA6A9B5,ON_ACCENT=0xFF30204E;
+    static String count(int number,String one,String few,String many){int n=Math.abs(number)%100;return number+" "+(n>=11&&n<=14?many:n%10==1?one:n%10>=2&&n%10<=4?few:many);}
+    static String tracks(int number){return count(number,"композиція","композиції","композицій");}
+    static String name(CharSequence value){return value==null?"":value.toString().strip().replaceAll("\\s+"," ");}
+    static String album(String value){return value==null||value.isBlank()||value.equals("[Unknown Album]")?"Невідомий альбом":value;}
+    static GradientDrawable atmosphere(int color){return new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,new int[]{android.graphics.Color.rgb((Color.red(color)+16)/3,(Color.green(color)+18)/3,(Color.blue(color)+22)/3),BG,BG});}
+    static void divider(LinearLayout parent){View line=new View(parent.getContext());line.setBackgroundColor(RAISED);LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(-1,dp(parent.getContext(),1));size.setMargins(0,dp(parent.getContext(),8),0,dp(parent.getContext(),8));parent.addView(line,size);}
     static int dp(Context c,float n){return (int)(n*c.getResources().getDisplayMetrics().density+.5f);}
     static GradientDrawable shape(Context c,int color,int radius){GradientDrawable drawable=new GradientDrawable();drawable.setColor(color);drawable.setCornerRadius(dp(c,radius));return drawable;}
     static TextView text(Context c,String value,int size,int color){TextView text=new TextView(c);text.setText(value);text.setTextSize(size);text.setTextColor(color);text.setFontFeatureSettings("kern");text.setIncludeFontPadding(false);return text;}

@@ -32,6 +32,8 @@ final class IconButton extends View {
             case "next","previous"->{if(icon.equals("previous")){c.translate(24,0);c.scale(-1,1);}paint.setStyle(Paint.Style.FILL);path.moveTo(5,5);path.lineTo(16,12);path.lineTo(5,19);path.close();c.drawPath(path,paint);line(c,19,5,19,19);}
             case "back"->{line(c,15,5,8,12);line(c,8,12,15,19);}
             case "down"->{line(c,5,9,12,16);line(c,12,16,19,9);}
+            case "up"->{line(c,5,15,12,8);line(c,12,8,19,15);}
+            case "close"->{line(c,6,6,18,18);line(c,18,6,6,18);}
             case "more"->{paint.setStyle(Paint.Style.FILL);for(int y=5;y<=19;y+=7)c.drawCircle(12,y,1.5f,paint);}
             case "shuffle"->{path.moveTo(3,6);path.lineTo(6,6);path.lineTo(17,18);path.lineTo(21,18);c.drawPath(path,paint);line(c,17,14,21,18);line(c,21,18,17,21);line(c,3,18,6,18);line(c,6,18,10,14);line(c,14,10,17,6);line(c,17,6,21,6);line(c,17,3,21,6);line(c,21,6,17,10);}
             case "repeat","repeat1"->{path.moveTo(4,10);path.lineTo(4,6);path.lineTo(20,6);path.lineTo(17,3);c.drawPath(path,paint);path.reset();path.moveTo(20,14);path.lineTo(20,18);path.lineTo(4,18);path.lineTo(7,21);c.drawPath(path,paint);if(icon.equals("repeat1")){line(c,12,10,12,14);}}

@@ -2,6 +2,8 @@
 
 ## Автоматичні
 
+Для змін іконки, редактора джерела та Jellyfin у поточному Unreleased APK навмисно не збирається. Після наступної збірки перевірити форму на портретному/альбомному екрані, з відкритою клавіатурою та великим шрифтом; показ пароля, помилки полів, додавання/редагування джерела та іконку в круглій і квадратній масках launcher. API-діагностика Jellyfin підтвердила HTTP/HTTPS login і читання порожньої Audio-бібліотеки; це не перевірка Android UI, відтворення або пагінації непорожньої бібліотеки.
+
 `bash scripts/test-core.sh` перевіряє URL/encoding, tokens, origin boundaries, метадані, EQ presets і виміряний DSP (синусоїди, стерео, Preamp, headroom, bypass/reset), синтаксис Java, XML/manifest та SQLite schema/migrations. Синтаксичний parser не перевіряє Android types.
 
 `bash scripts/build.sh` локально виконує core checks, реальну debug-збірку й Android Lint. Для окремої компіляції APK instrumentation-тестів виконай `bash gradlew --no-daemon :app:assembleDebugAndroidTest`; це не запускає тести на Android.

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Adopt the Resonance Mint launcher icon with an adaptive Android mask and safe margins.
+- Replace the narrow source alert with a full-screen, keyboard-aware editor: full-width fields, persistent labels, protocol help and password visibility.
+- Fix Jellyfin authentication by sending client identity and the session token in the Authorization header; retain Emby compatibility.
+- Distinguish DNS, TLS, connection, timeout and HTTP failures in source synchronization messages.
+
 ## 0.5.0
 
 - Fixed clipped library navigation: three equal tabs and a visible More menu replace horizontally scrolling category buttons.

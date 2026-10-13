@@ -270,22 +270,27 @@ public final class MainActivity extends Activity {
     }
     private void sourceActions(Source source){new AlertDialog.Builder(this).setTitle(source.name).setItems(new String[]{"Композиції джерела","Редагувати","Видалити джерело"},(d,at)->{if(at==0)showTracks(source.name,matching(t->source.id.equals(t.sourceId)));else if(at==1)sourceDialog(source);else new AlertDialog.Builder(this).setMessage("Видалити джерело, його записи та офлайн-копії?").setNegativeButton("Скасувати",null).setPositiveButton("Видалити",(x,y)->{for(Track t:matching(t->source.id.equals(t.sourceId))){String path=app.library.offline(t.id);if(!path.isEmpty())new File(path).delete();}app.sources.remove(source.id);app.library.removeSource(source.id);reload();}).show();}).show();}
     private void sourceDialog(Source existing){
-        LinearLayout form=Ui.column(this);Ui.pad(form,20,12);Spinner type=new Spinner(this);Source.Type[] types=Source.Type.values();type.setAdapter(new ArrayAdapter<>(this,android.R.layout.simple_spinner_dropdown_item,types));form.addView(type);
-        EditText name=input("Назва джерела",false),url=input("https://music.example.org",false),user=input("Ім’я користувача",false),password=input("Пароль; для Plex — X-Plex-Token",true);
-        form.addView(name);form.addView(url);form.addView(user);form.addView(password);form.addView(Ui.text(this,"Plex: адреса самого Plex Media Server і його token. Kodi: адреса HTTP-сервера. WebDAV: адреса папки з музикою.",12,Ui.MUTED));
-        if(existing!=null){name.setText(existing.name);url.setText(existing.baseUrl);user.setText(existing.username);password.setText(existing.password);type.setSelection(existing.type.ordinal());type.setEnabled(false);}
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle(existing==null?"Нове джерело":"Редагувати джерело").setView(form).setNegativeButton("Скасувати",null).setPositiveButton("Зберегти й синхронізувати",null).create();
-        dialog.setOnShowListener(d->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{try{
-            if(name.getText().toString().trim().isEmpty())throw new IllegalArgumentException("Введіть назву");
-            Source source=new Source(existing==null?UUID.randomUUID().toString():existing.id,name.getText().toString().trim(),types[type.getSelectedItemPosition()],url.getText().toString(),user.getText().toString(),password.getText().toString());
-            app.sources.save(source);dialog.dismiss();sync(source);
-        }catch(Exception e){message(e.getMessage());}}));dialog.show();
+        SourceDialog.show(this,existing,source->{app.sources.save(source);sync(source);});
     }
+
     private void sync(Source source){if(syncing){message("Дочекайтеся поточної синхронізації");return;}syncing=true;render();app.io.execute(()->{try{
         List<Track> tracks=app.providers.synchronize(source,status->app.main.post(()->{if(!isDestroyed())subtitle.setText(status);}));app.library.merge(source.id,tracks,true);app.artwork.retryFailures();
         app.main.post(()->{syncing=false;message("Синхронізовано: "+Ui.tracks(tracks.size()));reload();});
     }catch(Exception e){app.main.post(()->{syncing=false;message("Не вдалося синхронізувати. "+safeError(e));render();});}});}
-    private String safeError(Exception e){return e instanceof java.io.IOException?"Перевірте адресу, мережу й облікові дані.":"Перевірте налаштування та сумісність API сервера.";}
+    private String safeError(Exception e){
+        if(e instanceof java.net.UnknownHostException)return "Не вдалося знайти сервер. Перевірте адресу та DNS у поточній мережі.";
+        if(e instanceof javax.net.ssl.SSLException)return "Не вдалося перевірити HTTPS. Перевірте ім’я сервера, строк дії сертифіката та встановлення його CA на телефоні.";
+        if(e instanceof java.net.SocketTimeoutException)return "Сервер не відповів вчасно. Перевірте мережу та порт.";
+        if(e instanceof java.net.ConnectException)return "Не вдалося з’єднатися із сервером. Перевірте адресу, порт та доступність сервера.";
+        if(e instanceof app.selfonium.net.Http.StatusException status)return switch(status.status){
+            case 401 -> "Сервер відхилив авторизацію. Перевірте логін і пароль або повторно збережіть джерело.";
+            case 403 -> "Сервер заборонив доступ. Перевірте права користувача на музичну бібліотеку.";
+            case 400 -> "Сервер відхилив запит (HTTP 400). Перевірте тип джерела та сумісність API.";
+            case 404 -> "API не знайдено (HTTP 404). Перевірте тип джерела та адресу без /web.";
+            default -> "Сервер повернув HTTP "+status.status+". Перевірте його стан і налаштування.";
+        };
+        return e instanceof java.io.IOException?"Перевірте адресу, мережу й облікові дані.":"Перевірте налаштування та сумісність API сервера.";
+    }
     private void scan(){String permission=Build.VERSION.SDK_INT>=33?Manifest.permission.READ_MEDIA_AUDIO:Manifest.permission.READ_EXTERNAL_STORAGE;
         if(checkSelfPermission(permission)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{permission},100);return;}subtitle.setVisibility(View.VISIBLE);subtitle.setText("Сканування пристрою…");app.io.execute(()->{try{List<Track> tracks=LocalMusic.scan(this);app.library.merge("device",tracks,true);app.main.post(()->{message("Знайдено: "+Ui.tracks(tracks.size()));reload();});}catch(Exception e){app.main.post(()->message("Не вдалося прочитати медіатеку"));}});}
     private void importFiles(){Intent intent=new Intent(Intent.ACTION_OPEN_DOCUMENT).setType("audio/*").addCategory(Intent.CATEGORY_OPENABLE).putExtra(Intent.EXTRA_ALLOW_MULTIPLE,true);intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);startActivityForResult(intent,101);}

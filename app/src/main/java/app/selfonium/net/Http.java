@@ -17,6 +17,10 @@ public final class Http {
     private static final OkHttpClient CLIENT=new OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
             .connectTimeout(15,TimeUnit.SECONDS).readTimeout(30,TimeUnit.SECONDS).build();
     private Http() {}
+    public static final class StatusException extends IOException {
+        public final int status;
+        StatusException(int status){super("HTTP "+status);this.status=status;}
+    }
     public static final class Response implements AutoCloseable {
         private final okhttp3.Response response;
         Response(okhttp3.Response response){this.response=response;}
@@ -44,7 +48,7 @@ public final class Http {
                 if(!method.equals("GET")&&!method.equals("HEAD")&&status!=307&&status!=308)throw new IOException("Перевірте кінцеву адресу API сервера");
                 url=next;continue;
             }
-            if(status<200||status>=300){response.close();throw new IOException(status==401||status==403?"Сервер відхилив авторизацію":"Помилка сервера HTTP "+status);}
+            if(status<200||status>=300){response.close();throw new StatusException(status);}
             return new Response(response);
         }
         throw new IOException("Забагато перенаправлень");

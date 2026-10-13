@@ -32,8 +32,16 @@ public final class Providers {
         Map<String,String> h=new LinkedHashMap<>();h.put("Accept","application/json");
         switch(s.type){
             case JELLYFIN,EMBY -> {
-                h.put("X-Emby-Authorization","MediaBrowser Client=\"SELFonium\", Device=\"Android\", DeviceId=\"selfonium-"+s.id+"\", Version=\"0.3.0\"");
-                if(!s.token.isEmpty())h.put("X-Emby-Token",s.token);
+                String authorization="MediaBrowser Client=\"SELFonium\", Device=\"Android\", DeviceId=\"selfonium-"+s.id+"\", Version=\"0.5.0\"";
+                if(s.type==Source.Type.JELLYFIN){
+                    // Current Jellyfin accepts client identity and session token in Authorization.
+                    // X-Emby-* alone can fail even before credential validation.
+                    if(!s.token.isEmpty())authorization+=", Token=\""+s.token+"\"";
+                    h.put("Authorization",authorization);
+                }else{
+                    h.put("X-Emby-Authorization",authorization);
+                    if(!s.token.isEmpty())h.put("X-Emby-Token",s.token);
+                }
             }
             case PLEX -> {h.put("X-Plex-Token",s.token);h.put("X-Plex-Product","SELFonium");h.put("X-Plex-Client-Identifier",s.id);}
             case AUDIOBOOKSHELF -> {if(!s.token.isEmpty())h.put("Authorization","Bearer "+s.token);}

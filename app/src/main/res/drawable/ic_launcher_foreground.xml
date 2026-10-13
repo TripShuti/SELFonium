@@ -1,0 +1,3 @@
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:inset="10dp">
+    <bitmap android:src="@drawable/ic_launcher_resonance" android:gravity="fill" />
+</inset>

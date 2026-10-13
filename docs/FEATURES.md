@@ -4,7 +4,7 @@
 |---|---|---|
 | Локальні файли | MediaStore, document picker, embedded covers | Рекурсивний folder scanner |
 | Subsonic / OpenSubsonic | Token authentication, альбоми/треки, streaming, artwork | Server playlist sync, scrobbling, lyrics; Navidrome перевірений на пристрої |
-| Jellyfin / Emby | Login, paged Audio items, static stream | QuickConnect, playback reporting, transcoding; потрібні серверні тести |
+| Jellyfin / Emby | Login, paged Audio items, static stream | Jellyfin: HTTP/HTTPS login та читання порожньої Audio-бібліотеки перевірені окремими API-запитами; playback і Emby ще не перевірені. Немає QuickConnect, playback reporting, transcoding та server artwork |
 | Plex | Server URL + token, music sections/items, original stream | Account discovery/PIN, transcoding; потрібен серверний тест |
 | WebDAV | PROPFIND traversal, Basic auth, file streaming | Потрібні серверні тести |
 | Kodi | GetSongs / PrepareDownload, локальне відтворення | Remote renderer control |
@@ -12,6 +12,8 @@
 | Радіо | Прямі HTTP(S) URL, HLS URL із .m3u8 | Каталог станцій, M3U/PLS resolution |
 
 Вигляд дозволяє обрати акцент із палітри або ввести HEX-колір, увімкнути чорний фон AMOLED та змінити кількість колонок. Налаштування зберігаються після перезапуску.
+
+Іконка запуску — Resonance Mint. Редактор джерела відкривається на весь екран: поля на повну ширину, постійні підписи, прокручування при відкритій клавіатурі та перемикач видимості пароля. Тип сервера визначає підказки для адреси й авторизації.
 
 Бібліотека відкривається одразу на альбомах, виконавцях або композиціях; остання категорія зберігається при переходах між вкладками. Для обкладинок можна обрати 2 або 3 колонки. Сторінки альбому мають нумерований список треків, сторінки виконавця — добірку альбомів. Для виконавця поки використовується обкладинка одного з його альбомів або окрема заглушка; завантаження справжніх фотографій виконавців відсутнє. У горизонтальному режимі бібліотека використовує компактні картки, а плеєр показує обкладинку та керування у двох колонках.
 

@@ -2,7 +2,8 @@
 
 ## Unreleased
 
-- Repository documentation, MIT license and GitHub build workflow.
+- Repository documentation and MIT license.
+- Removed the GitHub build workflow and its Dependabot configuration during active development; builds and checks run locally.
 
 ## 0.3.0
 

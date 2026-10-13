@@ -65,7 +65,7 @@ bash scripts/test-core.sh
 python3 scripts/check-repository.py
 ```
 
-GitHub Actions виконує перевірки, Android-збірку та Lint. Автоматичні тести дотиків запускаються окремо на під’єднаному пристрої. Дивись [CONTRIBUTING.md](CONTRIBUTING.md), [сценарії тестування](docs/TESTING.md), [план розвитку](docs/ROADMAP.md) та [історію змін](CHANGELOG.md).
+Під час активної розробки збірка та перевірки запускаються локально. Автоматичні тести дотиків запускаються окремо на під’єднаному пристрої. Дивись [CONTRIBUTING.md](CONTRIBUTING.md), [сценарії тестування](docs/TESTING.md), [план розвитку](docs/ROADMAP.md) та [історію змін](CHANGELOG.md).
 
 ## Ліцензія
 

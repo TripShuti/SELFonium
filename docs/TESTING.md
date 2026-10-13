@@ -4,7 +4,7 @@
 
 `bash scripts/test-core.sh` перевіряє URL/encoding, tokens, origin boundaries, метадані, EQ presets, синтаксис Java, XML/manifest та SQLite schema/migrations. Синтаксичний parser не перевіряє Android types.
 
-`bash scripts/build.sh` виконує core checks, реальну debug-збірку й Android Lint. CI також компілює APK instrumentation-тестів, але не запускає Android runtime.
+`bash scripts/build.sh` локально виконує core checks, реальну debug-збірку й Android Lint. Для окремої компіляції APK instrumentation-тестів виконай `bash gradlew --no-daemon :app:assembleDebugAndroidTest`; це не запускає тести на Android.
 
 Для під’єднаного власного пристрою з USB debugging:
 

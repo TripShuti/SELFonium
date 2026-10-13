@@ -2,6 +2,8 @@
 
 ## Автоматичні
 
+Публічний APK 0.5.1: `assembleRelease` і `lintRelease` пройшли (0 помилок, 20 попереджень); перевірено підпис, вирівнювання ZIP, versionCode 6 і `debuggable=false`. Сертифікат підпису збігається з перевіреною debug-збіркою. Окрема runtime-перевірка release-варіанта на телефоні ще не виконана.
+
 0.5.1: core checks, Java/XML/storage checks, debug APK та lint пройшли. APK встановлено поверх 0.5.0; Android підтвердив versionCode 6. На телефоні перевірено відкриття форми джерела: поля займають повну ширину, кнопка збереження залишається над відкритою клавіатурою. Ще перевірити форму на портретному/альбомному екрані, з відкритою клавіатурою та великим шрифтом; показ пароля, помилки полів, додавання/редагування джерела та іконку в круглій і квадратній масках launcher. API-діагностика Jellyfin підтвердила HTTP/HTTPS login і читання порожньої Audio-бібліотеки; це не перевірка Android UI, відтворення або пагінації непорожньої бібліотеки.
 
 `bash scripts/test-core.sh` перевіряє URL/encoding, tokens, origin boundaries, метадані, EQ presets і виміряний DSP (синусоїди, стерео, Preamp, headroom, bypass/reset), синтаксис Java, XML/manifest та SQLite schema/migrations. Синтаксичний parser не перевіряє Android types.

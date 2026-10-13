@@ -37,6 +37,8 @@ SDK і Gradle зберігаються в ігнорованій Git дирек�
 
 ## Результати
 
+Готовий APK доступний у [GitHub Releases](https://github.com/TripShuti/SELFonium/releases). Публічний файл `SELFonium-0.5.1.apk` зібрано з build type `release` (`debuggable=false`) та підписано поточним ключем розробки для сумісності з попередніми встановленнями. Ключ залишається поза репозиторієм. `scripts/build.sh` і далі створює debug-збірку для локальної розробки.
+
 - APK: `app/build/outputs/apk/debug/app-debug.apk`.
 - Lint: `app/build/reports/lint-results-debug.html`.
 - Установлення: `adb install -r app/build/outputs/apk/debug/app-debug.apk`.

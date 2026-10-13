@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Refresh the project README with Resonance Mint branding, a feature overview, server support status and four screenshots from Android 0.5.1.
+
 ## 0.5.1
 
 - Adopt the Resonance Mint launcher icon with an adaptive Android mask and safe margins.

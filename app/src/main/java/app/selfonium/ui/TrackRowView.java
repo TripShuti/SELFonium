@@ -26,9 +26,9 @@ final class TrackRowView extends LinearLayout {
         setOrientation(HORIZONTAL);
         setGravity(Gravity.CENTER_VERTICAL);
         setMinimumHeight(Ui.dp(context, 64));
-        Ui.pad(this, 0, 6);
+        Ui.pad(this, 8, 8);
         setBackground(new RippleDrawable(ColorStateList.valueOf(0x22FFFFFF), null,
-                Ui.shape(context, 0xFFFFFFFF, 8)));
+                Ui.shape(context, 0xFFFFFFFF, 12)));
         setFocusable(true);
         // Long-clickable views consume taps themselves, so do not depend on ListView's listener.
         setOnClickListener(view -> { if (playAction != null) playAction.run(); });

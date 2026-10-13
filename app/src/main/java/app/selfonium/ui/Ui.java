@@ -12,7 +12,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 final class Ui {
-    static final int BG=0xFF101216,SURFACE=0xFF1A1D24,RAISED=0xFF252932,ACCENT=0xFFCDBBFA,TEXT=0xFFF1F0F5,MUTED=0xFFA6A9B5,ON_ACCENT=0xFF30204E;
+    static int BG=0xFF101216,SURFACE=0xFF1A1D24,RAISED=0xFF252932,ACCENT=0xFFCDBBFA,TEXT=0xFFF1F0F5,MUTED=0xFFA6A9B5,ON_ACCENT=0xFF30204E,TONAL=0xFF393247;
+    static final int DEFAULT_ACCENT=0xFFCDBBFA;
+    static void load(Context context){var prefs=context.getSharedPreferences("appearance",0);ACCENT=prefs.getInt("accent",DEFAULT_ACCENT)|0xFF000000;BG=prefs.getBoolean("oled",false)?0xFF000000:0xFF101216;ON_ACCENT=luminance(ACCENT)>.179?0xFF111318:0xFFFFFFFF;TONAL=Color.rgb((Color.red(ACCENT)+26*3)/4,(Color.green(ACCENT)+29*3)/4,(Color.blue(ACCENT)+36*3)/4);}
+    static double luminance(int color){double sum=0;double[] weights={.2126,.7152,.0722};int[] rgb={Color.red(color),Color.green(color),Color.blue(color)};for(int i=0;i<3;i++){double v=rgb[i]/255.0;sum+=weights[i]*(v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));}return sum;}
+    static void tint(android.widget.CompoundButton button){ColorStateList colors=new ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{ACCENT,MUTED});if(button instanceof android.widget.Switch toggle){toggle.setThumbTintList(colors);toggle.setTrackTintList(new ColorStateList(new int[][]{new int[]{android.R.attr.state_checked},new int[]{}},new int[]{(ACCENT&0xFFFFFF)|0x66000000,RAISED}));}else button.setButtonTintList(colors);}
     static String count(int number,String one,String few,String many){int n=Math.abs(number)%100;return number+" "+(n>=11&&n<=14?many:n%10==1?one:n%10>=2&&n%10<=4?few:many);}
     static String tracks(int number){return count(number,"композиція","композиції","композицій");}
     static String name(CharSequence value){return value==null?"":value.toString().strip().replaceAll("\\s+"," ");}
@@ -31,7 +35,7 @@ final class Ui {
         view.setBackground(new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF),shape(c,accent?ACCENT:SURFACE,12),null));
         view.setOnClickListener(v->action.run());view.setContentDescription(label);return view;
     }
-    static RippleDrawable ripple(Context c,int color,int radius){return new RippleDrawable(ColorStateList.valueOf(0x22D0BCFE),shape(c,color,radius),null);}
+    static RippleDrawable ripple(Context c,int color,int radius){return new RippleDrawable(ColorStateList.valueOf((ACCENT&0xFFFFFF)|0x33000000),shape(c,color,radius),null);}
     static android.app.Dialog screen(android.app.Activity activity){
         android.app.Dialog dialog=new android.app.Dialog(activity,android.R.style.Theme_Material_NoActionBar);
         dialog.getWindow().setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(BG));

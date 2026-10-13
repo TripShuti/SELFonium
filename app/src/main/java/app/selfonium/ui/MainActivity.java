@@ -42,12 +42,12 @@ public final class MainActivity extends Activity {
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
     private LinearLayout root,mini,playerCard;private IconButton backButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
     private TextView playerTitle,playerArtist,playerAlbum,playerTime,playerRemaining;private SeekBar playerSeek;private FrameLayout playerCover;
-    private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
+    private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog,appearanceDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
     private final Deque<Runnable> detailHistory=new ArrayDeque<>();private Runnable detailPage;
     private LinearLayout navigation;private String libraryCategory="Альбоми";private int tab;private List<Track> library=new ArrayList<>();private boolean syncing;
     private final Runnable progress=new Runnable(){@Override public void run(){updatePlayer();handler.postDelayed(this,500);}};
     @Override public void onCreate(Bundle state){
-        super.onCreate(state);app=(SelfoniumApp)getApplication();settings=getSharedPreferences("player",MODE_PRIVATE);
+        super.onCreate(state);Ui.load(this);app=(SelfoniumApp)getApplication();settings=getSharedPreferences("player",MODE_PRIVATE);
         if(state!=null){tab=state.getInt("tab");category=state.getString("category","Композиції");section=state.getString("section","");query=state.getString("query","");libraryCategory=state.getString("libraryCategory","Альбоми");}
         build();reload();
         controllerFuture=new MediaController.Builder(this,new SessionToken(this,new ComponentName(this,PlaybackService.class))).buildAsync();
@@ -60,7 +60,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onStart(){super.onStart();handler.post(progress);}
     @Override protected void onStop(){handler.removeCallbacks(progress);super.onStop();}
-    @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
+    @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);super.onSaveInstanceState(state);}
     private boolean landscape(){return getResources().getConfiguration().orientation==2;}
     private int dp(float n){return Ui.dp(this,n);}
@@ -103,7 +103,7 @@ public final class MainActivity extends Activity {
     private void render(){
         if(content==null)return;content.removeAllViews();detailShowing=false;detailHistory.clear();detailPage=null;heading.setText(new String[]{"SELFonium","Бібліотека","Пошук","Налаштування"}[tab]);
         subtitle.setText("Синхронізація…");subtitle.setVisibility(syncing?View.VISIBLE:View.GONE);backButton.setVisibility(section.isEmpty()?View.GONE:View.VISIBLE);
-        for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?0xFF393247:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
+        for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?Ui.TONAL:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
         switch(tab){case 0->home();case 1->{if(section.equals("category"))libraryPage();else if(section.equals("playlists"))playlists();else libraryRoot();}case 2->libraryPage();case 3->{if(section.equals("sources"))sources();else settingsPage();}}
     }
     private LinearLayout scroll(){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);LinearLayout column=Ui.column(this);Ui.pad(column,16,8);scroll.addView(column);content.addView(scroll);return column;}
@@ -134,14 +134,11 @@ public final class MainActivity extends Activity {
     private void openSources(){tab=3;section="sources";query="";render();}
     private void libraryRoot(){category=libraryCategory;libraryPage();}
     private void categoryTabs(LinearLayout page,boolean primary){
-        HorizontalScrollView scroll=new HorizontalScrollView(this);scroll.setHorizontalScrollBarEnabled(false);LinearLayout choices=Ui.row(this);
-        String[] names=primary?new String[]{"Альбоми","Виконавці","Композиції"}:new String[]{"Улюблене","Плейлисти","Офлайн","Файли","Радіо"};
-        for(String name:names){TextView chip=Ui.button(this,name,primary&&category.equals(name),()->{
-            if(primary){category=name;if(tab==1)libraryCategory=name;render();}else openCategory(name);
-        });chip.setTextSize(13);chip.setMinHeight(dp(44));if(primary)chip.setSelected(category.equals(name));
-            LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(-2,-2);size.rightMargin=dp(6);choices.addView(chip,size);}
-        scroll.addView(choices);page.addView(scroll);Ui.space(page,8);
+        LinearLayout choices=Ui.row(this);for(String name:new String[]{"Альбоми","Виконавці","Композиції"}){
+            TextView chip=Ui.button(this,name,category.equals(name),()->{category=name;if(tab==1)libraryCategory=name;render();});Ui.pad(chip,4,8);chip.setSingleLine(true);chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setAutoSizeTextTypeUniformWithConfiguration(10,13,1,android.util.TypedValue.COMPLEX_UNIT_SP);chip.setSelected(category.equals(name));LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(0,dp(48),1);size.rightMargin=name.equals("Композиції")?0:dp(6);choices.addView(chip,size);
+        }page.addView(choices);Ui.space(page,8);
     }
+    private void librarySections(){String[] names={"Улюблене","Плейлисти","Офлайн","Файли","Радіо"};new AlertDialog.Builder(this).setTitle("Розділи бібліотеки").setItems(names,(d,at)->openCategory(names[at])).show();}
     private View emptyState(String symbol,String title,String summary,String action,Runnable run){
         LinearLayout box=Ui.column(this);box.setGravity(Gravity.CENTER);Ui.pad(box,24,32);
         IconButton glyph=icon(symbol,title,()->{});glyph.active(true);glyph.setFocusable(false);glyph.setClickable(false);glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);box.addView(glyph,new LinearLayout.LayoutParams(dp(48),dp(48)));Ui.space(box,12);
@@ -172,10 +169,10 @@ public final class MainActivity extends Activity {
             EditText editor=search;field.addView(icon("close","Очистити пошук",()->editor.setText("")),new LinearLayout.LayoutParams(dp(48),dp(48)));page.addView(field);Ui.space(page,8);
             search.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH){rememberSearch();hideKeyboard();return true;}return false;});
             categoryTabs(categoryBar,true);
-        }else if(rootLibrary){categoryTabs(categoryBar,true);if(!landscape())categoryTabs(categoryBar,false);}
+        }else if(rootLibrary){categoryTabs(categoryBar,true);}
         LinearLayout tools=Ui.row(this);TextView count=Ui.text(this,"",12,Ui.MUTED);tools.addView(count,new LinearLayout.LayoutParams(0,-2,1));
         if(category.equals("Альбоми")||category.equals("Виконавці"))tools.addView(icon("library","Змінити кількість колонок",()->{settings.edit().putInt("gridColumns",settings.getInt("gridColumns",2)==2?3:2).apply();render();}),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        if(rootLibrary&&landscape())tools.addView(icon("folder","Розділи бібліотеки",()->new AlertDialog.Builder(this).setTitle("Бібліотека").setItems(new String[]{"Улюблене","Плейлисти","Офлайн","Файли","Радіо"},(d,at)->openCategory(new String[]{"Улюблене","Плейлисти","Офлайн","Файли","Радіо"}[at])).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));
+        if(rootLibrary){TextView more=Ui.button(this,"Ще ▾",false,this::librarySections);Ui.pad(more,10,6);more.setTextSize(12);more.setContentDescription("Ще: розділи бібліотеки");tools.addView(more,new LinearLayout.LayoutParams(-2,dp(44)));}
         tools.addView(icon("sort","Сортування",()->new AlertDialog.Builder(this).setTitle("Сортування").setSingleChoiceItems(new String[]{"За назвою","За виконавцем","За альбомом","За тривалістю"},sortOrder,(d,at)->{sortOrder=at;d.dismiss();render();}).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));
         if(landscape()&&(searching||rootLibrary)){LinearLayout bar=Ui.row(this);bar.addView(categoryBar,new LinearLayout.LayoutParams(0,-2,1));bar.addView(tools,new LinearLayout.LayoutParams(-2,dp(48)));page.addView(bar);}else{page.addView(categoryBar);page.addView(tools);}
         FrameLayout results=new FrameLayout(this);page.addView(results,new LinearLayout.LayoutParams(-1,0,1));content.addView(page);
@@ -347,7 +344,7 @@ public final class MainActivity extends Activity {
         LinearLayout row=Ui.row(this);row.setBackground(Ui.ripple(this,Ui.SURFACE,12));Ui.pad(row,4,4);IconButton glyph=icon(symbol,name,action);glyph.active(true);row.addView(glyph,new LinearLayout.LayoutParams(dp(48),dp(48)));
         LinearLayout labels=Ui.column(this);Ui.pad(labels,10,0);labels.addView(Ui.title(this,name,16));if(!summary.isEmpty()){Ui.space(labels,5);labels.addView(Ui.text(this,summary,12,Ui.MUTED));}row.addView(labels,new LinearLayout.LayoutParams(0,-2,1));row.addView(icon("chevron",name,action),new LinearLayout.LayoutParams(dp(48),dp(48)));row.setOnClickListener(v->action.run());parent.addView(row);Ui.space(parent,6);
     }
-    private void settingsPage(){LinearLayout column=scroll();label(column,"Медіатека");settingRow(column,"server","Джерела музики","Сервери, файли та синхронізація",this::openSources);settingRow(column,"download","Офлайн","Завантажені композиції",()->openCategory("Офлайн"));
+    private void settingsPage(){LinearLayout column=scroll();label(column,"Персоналізація");settingRow(column,"settings","Вигляд","Акцентний колір, фон і сітка обкладинок",()->appearanceDialog=AppearanceDialog.show(this));label(column,"Медіатека");settingRow(column,"server","Джерела музики","Сервери, файли та синхронізація",this::openSources);settingRow(column,"download","Офлайн","Завантажені композиції",()->openCategory("Офлайн"));
         label(column,"Відтворення");settingRow(column,"equalizer","Еквалайзер","Частоти, підсилення та пресети",this::showEqualizer);settingRow(column,"play","Швидкість",settings.getFloat("speed",1)+"×",()->{String[] speeds={"0.75×","1×","1.25×","1.5×","2×"};float[] values={.75f,1f,1.25f,1.5f,2f};new AlertDialog.Builder(this).setTitle("Швидкість відтворення").setItems(speeds,(d,at)->{settings.edit().putFloat("speed",values[at]).apply();render();}).show();});settingRow(column,"clock","Таймер сну","Зупинка відтворення за таймером",this::sleep);
         Ui.space(column,24);TextView version=Ui.text(this,"SELFonium "+versionName(),12,Ui.MUTED);Ui.pad(version,16,8);column.addView(version);
     }

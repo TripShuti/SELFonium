@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.5.0
+
+- Fixed clipped library navigation: three equal tabs and a visible More menu replace horizontally scrolling category buttons.
+- Inset track artwork and controls within the rounded touch highlight.
+- Appearance settings: accent palette/custom HEX color, AMOLED black background and cover-grid columns, with a preview before applying.
+- Independent ten-band PCM equalizer with Preamp, 18 original presets, saved user presets and automatic headroom.
+- Classic fader controls, precise gain input and a calculated response graph; legacy EQ settings migrate once.
+- Added measured DSP tests for gain response, stereo isolation, preamp, headroom, bypass, reset and migration.
+
 ## 0.4.0
 
 - Music-first library with direct album/artist/track tabs, compact shortcuts and a persistent two/three-column choice.

@@ -14,7 +14,7 @@ final class IconButton extends View {
     public IconButton(Context context){this(context,"play","Відтворити",()->{});}
     IconButton(Context context,String icon,String description,Runnable action){
         super(context);this.icon=icon;setContentDescription(description);setFocusable(true);
-        setBackground(new RippleDrawable(ColorStateList.valueOf(0x33C5A7FF),null,Ui.shape(context,0xFFFFFFFF,30)));
+        setBackground(new RippleDrawable(ColorStateList.valueOf((Ui.ACCENT&0xFFFFFF)|0x33000000),null,Ui.shape(context,0xFFFFFFFF,30)));
         setOnClickListener(v->action.run());
     }
     void icon(String value){icon=value;invalidate();}

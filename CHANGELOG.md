@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Trust system and user-installed Android CAs for HTTPS home servers while retaining certificate and hostname verification.
 - Repository documentation and MIT license.
 - Removed the GitHub build workflow and its Dependabot configuration during active development; builds and checks run locally.
 

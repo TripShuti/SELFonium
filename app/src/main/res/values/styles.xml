@@ -1,0 +1,25 @@
+<resources>
+    <style name="AppTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#D0BCFE</item>
+        <item name="android:textColorPrimary">#E6E0E9</item>
+        <item name="android:textColorSecondary">#CAC4D0</item>
+        <item name="android:colorBackground">#141218</item>
+        <item name="android:colorBackgroundFloating">#211F26</item>
+        <item name="android:alertDialogTheme">@style/SelfoniumDialog</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:statusBarColor">#141218</item>
+        <item name="android:navigationBarColor">#141218</item>
+        <item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#141218</item>
+    </style>
+    <style name="SelfoniumDialog" parent="android:style/Theme.Material.Dialog.Alert">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#D0BCFE</item>
+        <item name="android:colorBackground">#211F26</item>
+        <item name="android:colorBackgroundFloating">#211F26</item>
+        <item name="android:windowBackground">@drawable/dialog_background</item>
+        <item name="android:textColorPrimary">#E6E0E9</item>
+        <item name="android:textColorSecondary">#CAC4D0</item>
+    </style>
+</resources>

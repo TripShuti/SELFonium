@@ -1,0 +1,33 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'app.selfonium'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'app.selfonium'
+        minSdk 26
+        targetSdk 35
+        versionCode 3
+        versionName '0.3.0'
+        testInstrumentationRunner 'android.test.InstrumentationTestRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+        coreLibraryDesugaringEnabled true
+    }
+    buildTypes { release { minifyEnabled false } }
+}
+
+dependencies {
+    // Framework-only instrumentation tests; these jars are never packaged into the player.
+    androidTestCompileOnly files("${android.sdkDirectory}/platforms/android-35/optional/android.test.runner.jar",
+            "${android.sdkDirectory}/platforms/android-35/optional/android.test.base.jar")
+    implementation 'androidx.annotation:annotation-experimental:1.4.1'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'androidx.media3:media3-exoplayer:1.6.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.6.1'
+    implementation 'androidx.media3:media3-session:1.6.1'
+    implementation 'androidx.media3:media3-datasource:1.6.1'
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.5'
+}

@@ -1,0 +1,49 @@
+# Build tools and generated output
+.gradle/
+.tooling/
+**/build/
+local.properties
+captures/
+reports/
+*.apk
+*.aab
+*.apks
+*.apkm
+*.dex
+*.hprof
+*.log
+*.zip
+*.tar
+*.tar.gz
+
+# Local credentials and signing material
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+*.pem
+*.p12
+*.pfx
+key.properties
+keystore.properties
+secrets.properties
+google-services.json
+
+# Runtime data and personal captures
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+Screenshot_*
+
+# Editors and local automation state
+.idea/
+.vscode/
+*.iml
+.agents/
+.codex/
+.DS_Store
+__pycache__/
+*.py[cod]

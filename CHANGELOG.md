@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.6.1
+
+- Focus remote sources on Subsonic/OpenSubsonic, with Navidrome as the primary tested server; remove Jellyfin, Emby, Plex, WebDAV, Kodi and Audiobookshelf adapters and connection choices.
+- Rename the protocol implementation to SubsonicClient; discover optional OpenSubsonic extension versions without requiring them for baseline library synchronization.
+- Retain retired source records encrypted across saves, and preserve existing library, favorites, playlists, queue and downloads.
+- Simplify connection setup to one Subsonic form with optional display name.
+- Distribute spare portrait player height between controls; retain scrolling for small displays and two columns in landscape.
+- Inset queue artwork inside rounded row highlights and remove the competing ListView selector.
+
 ## 0.6.0
 
 - Reuse matching playback queues; move queue serialization, restore and checkpoints off the UI thread.

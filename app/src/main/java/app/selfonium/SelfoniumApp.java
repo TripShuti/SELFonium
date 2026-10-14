@@ -8,14 +8,14 @@ import app.selfonium.data.SourceStore;
 import app.selfonium.data.ArtworkRepository;
 import app.selfonium.data.SocialSync;
 import app.selfonium.data.AudioRepository;
-import app.selfonium.net.Providers;
+import app.selfonium.net.SubsonicClient;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class SelfoniumApp extends Application {
     public Library library;
     public SourceStore sources;
-    public Providers providers;
+    public SubsonicClient providers;
     public ArtworkRepository artwork;
     public SocialSync social;
     public AudioRepository audio;
@@ -24,7 +24,7 @@ public final class SelfoniumApp extends Application {
     public final Handler main = new Handler(Looper.getMainLooper());
     @Override public void onCreate() {
         super.onCreate();
-        library = new Library(this); sources = new SourceStore(this); providers = new Providers(sources);
+        library = new Library(this); sources = new SourceStore(this); providers = new SubsonicClient(sources);
         artwork = new ArtworkRepository(this, library, providers);
         audio=new AudioRepository(this,library,sources);
         social = new SocialSync(this);social.requestFlush();

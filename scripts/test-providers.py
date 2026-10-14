@@ -2,7 +2,7 @@
 """Exercise production HTTP/provider code against a local fixture (no credentials/device required).
 
 Requires the existing Gradle OkHttp caches. A small pinned desktop org.json JAR is
-kept under .tooling; Android credential storage/Base64 are replaced only in this
+kept under .tooling; Android credential storage is replaced only in this
 JVM fixture. This does not test Android storage, rendering or a real server.
 """
 from pathlib import Path
@@ -25,9 +25,7 @@ with tempfile.TemporaryDirectory(prefix='selfonium-provider-tests-') as temporar
     work=Path(temporary)
     store=work/'app/selfonium/data/SourceStore.java';store.parent.mkdir(parents=True)
     store.write_text('package app.selfonium.data; public class SourceStore {public void save(app.selfonium.core.Source source){} public app.selfonium.core.Source get(String id){return null;}}')
-    base64=work/'android/util/Base64.java';base64.parent.mkdir(parents=True)
-    base64.write_text('package android.util; public final class Base64 {public static final int NO_WRAP=2;public static String encodeToString(byte[] b,int flags){return java.util.Base64.getEncoder().encodeToString(b);}}')
-    files=[*map(str,(root/'app/src/main/java/app/selfonium/core').glob('*.java')),str(root/'app/src/main/java/app/selfonium/net/Http.java'),str(root/'app/src/main/java/app/selfonium/net/Providers.java'),str(store),str(base64),str(root/'app/src/test/java/app/selfonium/net/ProviderSyncTest.java')]
+    files=[*map(str,(root/'app/src/main/java/app/selfonium/core').glob('*.java')),str(root/'app/src/main/java/app/selfonium/net/Http.java'),str(root/'app/src/main/java/app/selfonium/net/SubsonicClient.java'),str(root/'app/src/main/java/app/selfonium/data/SourceRecords.java'),str(store),str(root/'app/src/test/java/app/selfonium/net/ProviderSyncTest.java')]
     classpath=os.pathsep.join(map(str,cp))
     subprocess.run(['javac','--release','17','-cp',classpath,'-d',str(work),*files],check=True)
     subprocess.run(['java','-cp',str(work)+os.pathsep+classpath,'app.selfonium.net.ProviderSyncTest'],check=True)

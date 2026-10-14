@@ -60,3 +60,11 @@ bash gradlew --no-daemon :app:connectedDebugAndroidTest
 Пройдені локальна збірка, Lint (0 помилок), 32 core та 69 DSP-перевірок. Через ADB перевірені бібліотека без горизонтального скролу, меню «Ще», внутрішній відступ обкладинки в активному підсвічуванні, великий шрифт 1.3 та горизонтальний EQ. На серверній композиції підтверджено PCM-обробку 44.1 кГц / stereo й зростання лічильника оброблених кадрів. Перевірені вбудований пресет, точне введення смуги/Preamp, збереження, відновлення та видалення власних пресетів. Перевірені палітра, власний HEX, AMOLED і збереження акценту після перезапуску процесу; тестові налаштування повернуті.
 
 Instrumentation-набір, API26, Bluetooth/USB-аудіовиходи та оцінка звуку на слух у цій ітерації не виконувалися. Матеріали пристрою залишаються поза Git.
+
+## Subsonic focus / 0.6.1
+
+`bash scripts/build.sh`: 32 core, 69 measured DSP, Java syntax, XML/manifest, SQLite migrations, debug assembly, Android Lint and 119 HTTP/vault fixture checks passed. Fixtures exercise baseline Subsonic without discovery, advertised OpenSubsonic extension versions, failed optional discovery, and preservation of unknown source records alongside active Subsonic sources. These vault tests cover production JSON serialization, not Android Keystore encryption.
+
+Device review: portrait player distributes extra height between control groups; queue artwork is inset inside the rounded current-row background. Landscape and font scale 1.3 keep controls accessible; a temporary shorter display verifies scrolling to the bottom controls. Display size, rotation and font settings are restored after testing. Screenshots and device backups remain local. No API 26 emulator or instrumentation runtime run is claimed. Historical server-adapter checks above describe earlier versions; current remote support is exclusively Subsonic/OpenSubsonic, tested primarily with Navidrome.
+
+On the connected phone, manual Navidrome synchronization completed with 1093 source tracks. The full stored library retained 1383 tracks, 21 favorites and 4 playlists with an empty favorite outbox and no foreign-key violations before/after the update. Existing encrypted source preferences were unchanged by the upgrade.

@@ -11,7 +11,7 @@ import android.util.LruCache;
 import app.selfonium.core.Protocol;
 import app.selfonium.core.Track;
 import app.selfonium.net.Http;
-import app.selfonium.net.Providers;
+import app.selfonium.net.SubsonicClient;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
@@ -29,7 +29,7 @@ public final class ArtworkRepository {
     private static final long DISK_LIMIT = 96L * 1024 * 1024;
     private final Context context;
     private final Library library;
-    private final Providers providers;
+    private final SubsonicClient providers;
     private final File directory;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ThreadPoolExecutor workers = new ThreadPoolExecutor(3, 3, 30, TimeUnit.SECONDS,
@@ -48,7 +48,7 @@ public final class ArtworkRepository {
         public void cancel() { callback = null; }
         void deliver(Bitmap bitmap) { Consumer<Bitmap> target = callback; callback = null; if (target != null) target.accept(bitmap); }
     }
-    public ArtworkRepository(Context context, Library library, Providers providers) {
+    public ArtworkRepository(Context context, Library library, SubsonicClient providers) {
         this.context = context.getApplicationContext(); this.library = library; this.providers = providers;
         directory = new File(context.getCacheDir(), "artwork-v1");
     }
@@ -127,7 +127,7 @@ public final class ArtworkRepository {
             finally { try { retriever.release(); } catch (Exception ignored) {} }
         }
         if (bytes == null) {
-            Providers.Artwork artwork = providers.artwork(track);
+            SubsonicClient.Artwork artwork = providers.artwork(track);
             if (artwork == null) return null;
             if (!artwork.reference().equals(track.artwork)) library.artwork(track.id, artwork.reference());
             try (Http.Response response = Http.open("GET", artwork.stream().url(), artwork.stream().headers(), null);

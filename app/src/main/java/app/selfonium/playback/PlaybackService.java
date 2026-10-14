@@ -31,7 +31,7 @@ import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
 import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Track;
-import app.selfonium.net.Providers;
+import app.selfonium.net.SubsonicClient;
 import app.selfonium.ui.MainActivity;
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public final class PlaybackService extends MediaSessionService {
             String id=spec.uri.getLastPathSegment();Track track=app.library.get(id);if(track==null)throw new IOException("Композицію видалено з бібліотеки");
             String local=app.library.offline(id);
             if(!local.isEmpty()&&new File(local).isFile())return spec.withUri(Uri.fromFile(new File(local)));
-            try{Providers.Stream stream=app.providers.stream(track);return spec.withUri(Uri.parse(stream.url())).withRequestHeaders(stream.headers());}
+            try{SubsonicClient.Stream stream=app.providers.stream(track);return spec.withUri(Uri.parse(stream.url())).withRequestHeaders(stream.headers());}
             catch(Exception e){throw new IOException("Не вдалося відкрити аудіо. Перевірте джерело або синхронізуйте його повторно.",e);}
             }
         });

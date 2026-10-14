@@ -7,7 +7,6 @@ import android.security.keystore.KeyProperties;
 import android.util.Base64;
 import app.selfonium.core.Source;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.ArrayList;
@@ -21,7 +20,9 @@ import javax.crypto.spec.GCMParameterSpec;
 public final class SourceStore {
     private final SharedPreferences prefs;
     private List<Source> cached;
-    private static Source copy(Source source){Source result=new Source(source.id,source.name,source.type,source.baseUrl,source.username,source.password);result.token=source.token;result.userId=source.userId;return result;}
+    // Retain retired/unknown entries verbatim inside the encrypted vault on future saves.
+    private SourceRecords records;
+    private static Source copy(Source source){return new Source(source.id,source.name,source.type,source.baseUrl,source.username,source.password);}
     private List<Source> snapshot(){List<Source> result=new ArrayList<>();for(Source s:cached)result.add(copy(s));return result;}
     private static final String ALIAS="selfonium.sources.v1";
     public SourceStore(Context context) {prefs=context.getSharedPreferences("sources",Context.MODE_PRIVATE);}
@@ -38,15 +39,12 @@ public final class SourceStore {
     public synchronized List<Source> all() {
         if(cached!=null)return snapshot();
         String encrypted=prefs.getString("vault","");List<Source> result=new ArrayList<>();
-        if(encrypted.isEmpty()){cached=result;return snapshot();}
         try {
+            if(encrypted.isEmpty()){records=new SourceRecords(new JSONArray());cached=result;return snapshot();}
             String[] parts=encrypted.split(":");Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(parts[0],Base64.NO_WRAP)));
             JSONArray array=new JSONArray(new String(cipher.doFinal(Base64.decode(parts[1],Base64.NO_WRAP)),StandardCharsets.UTF_8));
-            for(int i=0;i<array.length();i++) {
-                JSONObject o=array.getJSONObject(i);Source source=new Source(o.getString("id"),o.getString("name"),Source.Type.valueOf(o.getString("type")),o.getString("url"),o.optString("user"),o.optString("password"));
-                source.token=o.optString("token");source.userId=o.optString("userId");result.add(source);
-            }
+            records=new SourceRecords(array);result.addAll(records.supported);
             cached=result;return snapshot();
         }catch(Exception e){throw new IllegalStateException("Не вдалося відкрити сховище джерел. Дані не перезаписано.");}
     }
@@ -55,8 +53,7 @@ public final class SourceStore {
     public synchronized void remove(String id) {List<Source> values=all();values.removeIf(s->s.id.equals(id));write(values);}
     private void write(List<Source> values) {
         try {
-            JSONArray array=new JSONArray();
-            for(Source s:values)array.put(new JSONObject().put("id",s.id).put("name",s.name).put("type",s.type.name()).put("url",s.baseUrl).put("user",s.username).put("password",s.password).put("token",s.token).put("userId",s.userId));
+            JSONArray array=records.encode(values);
             Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());
             String payload=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP)+":"+Base64.encodeToString(cipher.doFinal(array.toString().getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP);
             if(!prefs.edit().putString("vault",payload).commit())throw new IllegalStateException("Storage unavailable");

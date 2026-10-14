@@ -71,7 +71,7 @@ public final class MainActivity extends Activity {
         },command->handler.post(command));
     }
     @Override protected void onStart(){super.onStart();app.updates.foreground(true);app.updates.listen(updatesChanged);app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
-    @Override protected void onStop(){app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
+    @Override protected void onStop(){if(updateDialog!=null)updateDialog.onStop();app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
     @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
     @Override protected void onResume(){super.onResume();if(updateDialog!=null)updateDialog.onResume();}
     @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&app!=null)updatesChanged.accept(app.updates.state());}

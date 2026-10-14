@@ -22,7 +22,7 @@ final class UpdateDialog {
     private final Activity activity;private final UpdateManager manager;private final Dialog dialog;
     private final Consumer<UpdateManager.State> changed=this::render;
     private TextView last,status,check,download,details,notes,progressLabel,cancel;
-    private LinearLayout available;private ProgressBar progress;private boolean awaitingPermission;private ReleaseInfo shown;
+    private LinearLayout available;private ProgressBar progress;private boolean awaitingPermission,foreground=true;private ReleaseInfo shown;
     private UpdateDialog(Activity activity,UpdateManager manager){this.activity=activity;this.manager=manager;dialog=Ui.screen(activity);}
     private String text(int id,Object...args){return activity.getString(id,args);}
     private String date(long when){return DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT).format(new Date(when));}
@@ -71,9 +71,10 @@ final class UpdateDialog {
     };}
     boolean isShowing(){return dialog.isShowing();}
     void dismiss(){dialog.dismiss();}
-    void onResume(){if(!awaitingPermission)return;awaitingPermission=false;if(activity.getPackageManager().canRequestPackageInstalls())install();else Toast.makeText(activity,text(R.string.updates_permission_denied),Toast.LENGTH_LONG).show();}
+    void onStop(){foreground=false;}
+    void onResume(){foreground=true;if(!awaitingPermission)return;awaitingPermission=false;if(activity.getPackageManager().canRequestPackageInstalls())install();else Toast.makeText(activity,text(R.string.updates_permission_denied),Toast.LENGTH_LONG).show();}
     private void install(){
-        manager.prepareInstall(file->{if(activity.isDestroyed()||!dialog.isShowing())return;
+        manager.prepareInstall(file->{if(activity.isDestroyed()||!dialog.isShowing()||!foreground)return;
             if(!activity.getPackageManager().canRequestPackageInstalls()){
                 new AlertDialog.Builder(activity).setTitle(text(R.string.updates_permission_title)).setMessage(text(R.string.updates_permission)).setNegativeButton(text(R.string.updates_later),null).setPositiveButton(text(R.string.updates_open_settings),(d,w)->{
                     try{awaitingPermission=true;activity.startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,Uri.parse("package:"+activity.getPackageName())));}catch(ActivityNotFoundException|SecurityException e){awaitingPermission=false;unavailable();}

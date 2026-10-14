@@ -17,6 +17,7 @@ public final class Http {
     private static final OkHttpClient CLIENT=new OkHttpClient.Builder().followRedirects(false).followSslRedirects(false)
             .connectTimeout(15,TimeUnit.SECONDS).readTimeout(30,TimeUnit.SECONDS).build();
     private Http() {}
+    public static OkHttpClient.Builder clientBuilder(){return CLIENT.newBuilder();}
     public static final class StatusException extends IOException {
         public final int status;
         StatusException(int status){super("HTTP "+status);this.status=status;}

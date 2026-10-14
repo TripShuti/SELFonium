@@ -27,6 +27,7 @@ import androidx.media3.session.MediaController;
 import androidx.media3.session.SessionToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import app.selfonium.SelfoniumApp;
+import app.selfonium.R;
 import app.selfonium.core.Protocol;
 import app.selfonium.core.Source;
 import app.selfonium.core.Track;
@@ -39,6 +40,8 @@ import java.util.*;
 
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public final class MainActivity extends Activity {
+    private UpdateDialog updateDialog;private LinearLayout updateBanner;
+    private final java.util.function.Consumer<app.selfonium.update.UpdateManager.State> updatesChanged=this::onUpdateState;
     private SelfoniumApp app;private MediaController player;private ListenableFuture<MediaController> controllerFuture;
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
     private LinearLayout root,mini,playerCard;private IconButton backButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
@@ -67,9 +70,11 @@ public final class MainActivity extends Activity {
             });updatePlayer();}catch(Exception e){message("Не вдалося під’єднати плеєр");}
         },command->handler.post(command));
     }
-    @Override protected void onStart(){super.onStart();app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
-    @Override protected void onStop(){app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
-    @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
+    @Override protected void onStart(){super.onStart();app.updates.foreground(true);app.updates.listen(updatesChanged);app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
+    @Override protected void onStop(){app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
+    @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
+    @Override protected void onResume(){super.onResume();if(updateDialog!=null)updateDialog.onResume();}
+    @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&app!=null)updatesChanged.accept(app.updates.state());}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);super.onSaveInstanceState(state);}
     private boolean landscape(){return getResources().getConfiguration().orientation==2;}
     private int dp(float n){return Ui.dp(this,n);}
@@ -420,7 +425,19 @@ public final class MainActivity extends Activity {
     }
     private void settingsPage(){LinearLayout column=scroll();label(column,"Персоналізація");settingRow(column,"settings","Вигляд","Акцентний колір, фон і сітка обкладинок",()->appearanceDialog=AppearanceDialog.show(this));label(column,"Медіатека");settingRow(column,"server","Джерела музики","Сервери, файли та синхронізація",this::openSources);settingRow(column,"download","Офлайн","Завантажені композиції",()->openCategory("Офлайн"));
         label(column,"Відтворення");settingRow(column,"equalizer","Еквалайзер","Частоти, підсилення та пресети",this::showEqualizer);settingRow(column,"play","Швидкість",settings.getFloat("speed",1)+"×",()->{String[] speeds={"0.75×","1×","1.25×","1.5×","2×"};float[] values={.75f,1f,1.25f,1.5f,2f};new AlertDialog.Builder(this).setTitle("Швидкість відтворення").setItems(speeds,(d,at)->{settings.edit().putFloat("speed",values[at]).apply();render();}).show();});settingRow(column,"clock","Таймер сну","Зупинка відтворення за таймером",this::sleep);
+        label(column,getString(R.string.updates_title));settingRow(column,"download",getString(R.string.updates_settings),getString(R.string.updates_summary),this::showUpdates);
         Ui.space(column,24);TextView version=Ui.text(this,"SELFonium "+versionName(),12,Ui.MUTED);Ui.pad(version,16,8);column.addView(version);
+    }
+    private void onUpdateState(app.selfonium.update.UpdateManager.State state){
+        if(isDestroyed()||root==null||root.getVisibility()!=View.VISIBLE)return;
+        if(updateDialog!=null&&updateDialog.isShowing()){app.updates.announcement();return;}
+        var notice=app.updates.announcement();if(notice!=null)showUpdateBanner(notice.version);
+    }
+    private void showUpdates(){if(updateBanner!=null){root.removeView(updateBanner);updateBanner=null;}if(updateDialog==null||!updateDialog.isShowing())updateDialog=UpdateDialog.show(this,app.updates);}
+    private void showUpdateBanner(String version){
+        if(updateBanner!=null)root.removeView(updateBanner);updateBanner=Ui.row(this);Ui.pad(updateBanner,12,8);updateBanner.setBackground(Ui.shape(this,Ui.TONAL,12));
+        TextView open=Ui.button(this,getString(R.string.updates_banner,version),false,this::showUpdates);open.setContentDescription(getString(R.string.updates_open));updateBanner.addView(open,new LinearLayout.LayoutParams(0,-2,1));
+        updateBanner.addView(Ui.button(this,getString(R.string.updates_later),false,()->{root.removeView(updateBanner);updateBanner=null;}));root.addView(updateBanner,1);
     }
     private String versionName(){try{return getPackageManager().getPackageInfo(getPackageName(),0).versionName;}catch(PackageManager.NameNotFoundException e){return "";}}
     private void message(String text){if(!isDestroyed())Toast.makeText(this,text==null?"Помилка":text,Toast.LENGTH_LONG).show();}

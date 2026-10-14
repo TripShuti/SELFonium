@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class SelfoniumApp extends Application {
+    public app.selfonium.update.UpdateManager updates;
     public Library library;
     public SourceStore sources;
     public SubsonicClient subsonic;
@@ -31,6 +32,7 @@ public final class SelfoniumApp extends Application {
         artwork = new ArtworkRepository(this, library, subsonic);
         audio=new AudioRepository(this,library,sources);
         social = new SocialSync(this);social.requestFlush();
+        updates=new app.selfonium.update.UpdateManager(this);
         android.net.ConnectivityManager connectivity=getSystemService(android.net.ConnectivityManager.class);
         connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){
             @Override public void onAvailable(android.net.Network network){social.networkAvailable();}

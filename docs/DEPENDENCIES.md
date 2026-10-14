@@ -4,6 +4,7 @@
 |---|---|---|
 | AndroidX Media3 1.6.1 | Playback, sessions, HLS, data sources and cache database | [AndroidX Media](https://github.com/androidx/media), Apache-2.0 |
 | AndroidX annotation-experimental 1.4.1 | API opt-in annotations | [AndroidX](https://android.googlesource.com/platform/frameworks/support/), Apache-2.0 |
+| AndroidX Core 1.9.0 | FileProvider for verified update handoff; already resolved through Media3 | [AndroidX](https://android.googlesource.com/platform/frameworks/support/), Apache-2.0 |
 | OkHttp 4.12.0 | HTTP requests | [OkHttp](https://github.com/square/okhttp), Apache-2.0 |
 | desugar_jdk_libs 2.1.5 | Java API compatibility on older Android versions | [Upstream licenses and notices](https://github.com/google/desugar_jdk_libs) |
 | Android Gradle Plugin 8.9.2 | Android build integration | [Android tools](https://android.googlesource.com/platform/tools/base/), Apache-2.0 |

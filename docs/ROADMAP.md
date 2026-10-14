@@ -9,6 +9,10 @@
 - Signed GitHub releases 0.5.1 and 0.6.2 using the same certificate.
 - Local signing/backup tooling and prepared CI/CD workflows. Automated publication requires explicit activation and environment approval; hosted workflow results are tracked in GitHub Actions.
 
+## Development branch
+
+- In-app GitHub updater implemented with host fixtures; Android permission, installer and lifecycle checks remain pending. See [UPDATES.md](UPDATES.md).
+
 ## Next
 
 - Exercise more lifecycle, audio-focus, Bluetooth and network interruption cases, including the minimum supported Android version.

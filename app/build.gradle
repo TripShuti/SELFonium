@@ -20,6 +20,8 @@ android {
 }
 
 dependencies {
+    // FileProvider already resolves transitively through Media3; declare direct use explicitly.
+    implementation 'androidx.core:core:1.9.0'
     // Framework-only instrumentation tests; these jars are never packaged into the player.
     androidTestCompileOnly files("${android.sdkDirectory}/platforms/android-35/optional/android.test.runner.jar",
             "${android.sdkDirectory}/platforms/android-35/optional/android.test.base.jar")

@@ -35,3 +35,7 @@ HTTPS trusts Android system and user-installed CAs while retaining hostname, cha
 Source credentials are encrypted in private storage with Android Keystore. Automatic app backup is disabled; credential export is not implemented. Authenticated cross-origin redirects are rejected.
 
 Android Auto, Cast, UPnP/DLNA, SMB, cloud OAuth and widgets are not implemented. See the [roadmap](ROADMAP.md) for planned work; it is not a support or delivery guarantee.
+
+## Application updates
+
+The development version includes stable-release checks, private APK downloads and verified system-installer handoff. See [UPDATES.md](UPDATES.md) for behavior, security, metadata and Android limitations. This is not included in the published 0.6.3 APK.

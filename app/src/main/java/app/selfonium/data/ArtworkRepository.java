@@ -37,11 +37,13 @@ public final class ArtworkRepository {
     private final LruCache<String, Bitmap> memory = new LruCache<>(32 * 1024 * 1024) {
         @Override protected int sizeOf(String key, Bitmap bitmap) { return bitmap.getAllocationByteCount(); }
     };
+    private final ThreadPoolExecutor foreground=new ThreadPoolExecutor(1,1,30,TimeUnit.SECONDS,new ArrayBlockingQueue<>(32),new ThreadPoolExecutor.AbortPolicy());
+    private final Map<String,Runnable> jobs=new HashMap<>();
     private final Map<String, List<Ticket>> pending = new HashMap<>();
     private final LinkedHashMap<String, Long> failures = new LinkedHashMap<>();
 
     public static final class Ticket {
-        private Consumer<Bitmap> callback;
+        private volatile Consumer<Bitmap> callback;
         Ticket(Consumer<Bitmap> callback) { this.callback = callback; }
         public void cancel() { callback = null; }
         void deliver(Bitmap bitmap) { Consumer<Bitmap> target = callback; callback = null; if (target != null) target.accept(bitmap); }
@@ -53,7 +55,9 @@ public final class ArtworkRepository {
     private String key(Track track) {
         return track.sourceId + "\n" + (track.artwork.isEmpty() ? "track:" + track.remoteId : "cover:" + track.artwork);
     }
-    public Ticket load(Track track, Consumer<Bitmap> callback) {
+    public Bitmap peek(Track track){return track==null?null:memory.get(key(track));}
+    public Ticket load(Track track,Consumer<Bitmap> callback){return load(track,callback,false);}
+    public Ticket load(Track track, Consumer<Bitmap> callback,boolean urgent) {
         Ticket ticket = new Ticket(callback);
         String key = key(track);
         Bitmap cached = memory.get(key);
@@ -64,23 +68,25 @@ public final class ArtworkRepository {
                 main.post(() -> ticket.deliver(null)); return ticket;
             }
             List<Ticket> waiting = pending.get(key);
-            if (waiting != null) { waiting.add(ticket); return ticket; }
+            if (waiting != null) { waiting.add(ticket);Runnable queued=jobs.get(key);if(urgent&&queued!=null&&workers.remove(queued)){try{foreground.execute(queued);}catch(RejectedExecutionException busy){finish(key,null);}}return ticket; }
             pending.put(key, new ArrayList<>(List.of(ticket)));
         }
-        try {
-            workers.execute(() -> {
+        Runnable job=() -> {
+                synchronized(pending){List<Ticket> listeners=pending.get(key);if(listeners==null||listeners.stream().noneMatch(t->t.callback!=null)){pending.remove(key);jobs.remove(key);return;}}
                 Bitmap result = null;
                 try { result = read(track, key); } catch (Exception ignored) { /* A missing cover never interrupts audio. */ }
                 if (result != null) memory.put(key, result);
                 finish(key, result);
-            });
-        } catch (RejectedExecutionException busy) { finish(key, null); }
+            };
+        synchronized(pending){jobs.put(key,job);}
+        try{if(urgent)foreground.execute(job);else workers.execute(job);}
+        catch(RejectedExecutionException busy){finish(key,null);}
         return ticket;
     }
     private void finish(String key, Bitmap bitmap) {
         List<Ticket> listeners;
         synchronized (pending) {
-            listeners = pending.remove(key);
+            listeners = pending.remove(key);jobs.remove(key);
             if (bitmap == null) {
                 failures.put(key, System.currentTimeMillis());
                 while (failures.size() > 256) failures.remove(failures.keySet().iterator().next());

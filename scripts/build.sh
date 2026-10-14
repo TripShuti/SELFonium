@@ -17,4 +17,5 @@ fi
 export ANDROID_HOME="$sdk_dir"
 bash scripts/test-core.sh
 bash gradlew --no-daemon :app:assembleDebug :app:lintDebug
+python3 scripts/test-providers.py
 echo "APK: $PWD/app/build/outputs/apk/debug/app-debug.apk"

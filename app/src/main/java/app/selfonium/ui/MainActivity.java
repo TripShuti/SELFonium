@@ -32,6 +32,7 @@ import app.selfonium.core.Source;
 import app.selfonium.core.Track;
 import app.selfonium.data.DownloadService;
 import app.selfonium.data.LocalMusic;
+import app.selfonium.data.Library;
 import app.selfonium.playback.PlaybackService;
 import java.io.File;
 import java.util.*;
@@ -41,10 +42,18 @@ public final class MainActivity extends Activity {
     private SelfoniumApp app;private MediaController player;private ListenableFuture<MediaController> controllerFuture;
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
     private LinearLayout root,mini,playerCard;private IconButton backButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
-    private TextView playerTitle,playerArtist,playerAlbum,playerTime,playerRemaining;private SeekBar playerSeek;private FrameLayout playerCover;
+    private TextView playerTitle,playerArtist,playerAlbum,playerTime,playerRemaining;private SeekBar playerSeek;private FrameLayout playerCover;private CoverView playerArtwork;private long activePlaylist=-1;
     private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog,appearanceDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
     private final Deque<Runnable> detailHistory=new ArrayDeque<>();private Runnable detailPage;
     private LinearLayout navigation;private String libraryCategory="Альбоми";private int tab;private List<Track> library=new ArrayList<>();private boolean syncing;
+    private final java.util.function.Consumer<String> socialChanged=status->{
+        if(isDestroyed())return;if(!status.isEmpty())message(status);updatePlayer();
+        if(!detailShowing&&(section.equals("playlists")||category.equals("Улюблене")))reload();
+    };
+    private Track pendingArtwork;
+    private final Runnable bindArtwork=()->{Track track=pendingArtwork;if(track==null)return;miniCover.bind(track);if(playerArtwork!=null)playerArtwork.bind(track);};
+    private void queueArtwork(Track track){pendingArtwork=track;handler.removeCallbacks(bindArtwork);handler.postDelayed(bindArtwork,300);}
+    private final Runnable refreshSocial=new Runnable(){public void run(){app.social.refreshAll();handler.postDelayed(this,60_000);}};
     private final Runnable progress=new Runnable(){@Override public void run(){updatePlayer();handler.postDelayed(this,500);}};
     @Override public void onCreate(Bundle state){
         super.onCreate(state);Ui.load(this);app=(SelfoniumApp)getApplication();settings=getSharedPreferences("player",MODE_PRIVATE);
@@ -58,8 +67,8 @@ public final class MainActivity extends Activity {
             });updatePlayer();}catch(Exception e){message("Не вдалося під’єднати плеєр");}
         },command->handler.post(command));
     }
-    @Override protected void onStart(){super.onStart();handler.post(progress);}
-    @Override protected void onStop(){handler.removeCallbacks(progress);super.onStop();}
+    @Override protected void onStart(){super.onStart();app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
+    @Override protected void onStop(){app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
     @Override protected void onDestroy(){handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);super.onSaveInstanceState(state);}
     private boolean landscape(){return getResources().getConfiguration().orientation==2;}
@@ -75,7 +84,7 @@ public final class MainActivity extends Activity {
         top.addView(icon("more","Меню",this::mainMenu),new LinearLayout.LayoutParams(dp(48),dp(48)));root.addView(top);
         content=new FrameLayout(this);root.addView(content,new LinearLayout.LayoutParams(-1,0,1));
         playerCard=Ui.column(this);playerCard.setVisibility(View.GONE);playerCard.setBackground(Ui.shape(this,Ui.RAISED,12));playerCard.setClipToOutline(true);
-        mini=Ui.row(this);Ui.pad(mini,8,landscape()?2:6);miniCover=new CoverView(this);mini.addView(miniCover,new LinearLayout.LayoutParams(dp(40),dp(40)));miniCover.setOnClickListener(v->showPlayer());
+        mini=Ui.row(this);Ui.pad(mini,8,landscape()?2:6);miniCover=new CoverView(this);miniCover.urgent();mini.addView(miniCover,new LinearLayout.LayoutParams(dp(40),dp(40)));miniCover.setOnClickListener(v->showPlayer());
         LinearLayout miniText=Ui.column(this);Ui.pad(miniText,10,0);miniTitle=Ui.title(this,"Оберіть композицію",14);miniTitle.setSingleLine(true);miniTitle.setEllipsize(android.text.TextUtils.TruncateAt.END);
         miniArtist=Ui.text(this,"Відкрити бібліотеку",12,Ui.MUTED);miniArtist.setSingleLine(true);miniArtist.setEllipsize(android.text.TextUtils.TruncateAt.END);miniText.addView(miniTitle);Ui.space(miniText,3);miniText.addView(miniArtist);
         mini.addView(miniText,new LinearLayout.LayoutParams(0,-2,1));miniText.setOnClickListener(v->showPlayer());mini.setOnClickListener(v->showPlayer());
@@ -101,7 +110,7 @@ public final class MainActivity extends Activity {
     private List<Track> visibleLibrary(){return sourceFilter.isEmpty()?library:matching(t->t.sourceId.equals(sourceFilter));}
     private void reload(){app.io.execute(()->{List<Track> tracks=app.library.all();app.main.post(()->{if(isDestroyed())return;library=tracks;render();});});}
     private void render(){
-        if(content==null)return;content.removeAllViews();detailShowing=false;detailHistory.clear();detailPage=null;heading.setText(new String[]{"SELFonium","Бібліотека","Пошук","Налаштування"}[tab]);
+        if(content==null)return;activePlaylist=-1;content.removeAllViews();detailShowing=false;detailHistory.clear();detailPage=null;heading.setText(new String[]{"SELFonium","Бібліотека","Пошук","Налаштування"}[tab]);
         subtitle.setText("Синхронізація…");subtitle.setVisibility(syncing?View.VISIBLE:View.GONE);backButton.setVisibility(section.isEmpty()?View.GONE:View.VISIBLE);
         for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?Ui.TONAL:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
         switch(tab){case 0->home();case 1->{if(section.equals("category"))libraryPage();else if(section.equals("playlists"))playlists();else libraryRoot();}case 2->libraryPage();case 3->{if(section.equals("sources"))sources();else settingsPage();}}
@@ -214,13 +223,13 @@ public final class MainActivity extends Activity {
         if(tracks.isEmpty()&&header==null)return emptyState("music","Поки немає композицій","Додайте джерело або змініть фільтр.","",null);
         ListView list=new ListView(this);list.setDivider(null);list.setItemsCanFocus(true);list.setClipToPadding(false);list.setPadding(0,0,0,dp(12));if(header!=null)list.addHeaderView(header,null,false);
         list.setAdapter(new BaseAdapter(){public int getCount(){return tracks.size();}public Track getItem(int at){return tracks.get(at);}public long getItemId(int at){return at;}
-            public View getView(int at,View old,ViewGroup parent){TrackRowView row=old instanceof TrackRowView?(TrackRowView)old:new TrackRowView(MainActivity.this);row.bind(tracks.get(at),()->play(tracks,at),MainActivity.this::trackMenu);row.albumPosition(album?at+1:0);row.nowPlaying(tracks.get(at).id.equals(miniId));return row;}});return list;
+            public View getView(int at,View old,ViewGroup parent){TrackRowView row=old instanceof TrackRowView?(TrackRowView)old:new TrackRowView(MainActivity.this);row.bind(tracks.get(at),()->play(tracks,at),ignored->trackMenu(tracks.get(at),at));row.albumPosition(album?at+1:0);row.nowPlaying(tracks.get(at).id.equals(miniId));return row;}});return list;
     }
     private void showAlbum(Track album){List<Track> tracks=albumTracks(album);showCollection(Ui.album(album.album),tracks,true,false);}
     private void showArtist(String artist){List<Track> tracks=matching(t->t.artist.equals(artist)&&(sourceFilter.isEmpty()||sourceFilter.equals(t.sourceId)));tracks.sort(Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number));showCollection(artist,tracks,false,true);}
     private void showTracks(String name,List<Track> tracks){showCollection(name,tracks,false,false);}
     private void showCollection(String name,List<Track> tracks,boolean album,boolean artist){
-        hideKeyboard();if(detailShowing&&detailPage!=null)detailHistory.addLast(detailPage);detailPage=()->showCollection(name,tracks,album,artist);detailShowing=true;backButton.setVisibility(View.VISIBLE);content.removeAllViews();heading.setText(album?"Альбом":artist?"Виконавець":name);subtitle.setVisibility(View.GONE);
+        activePlaylist=-1;hideKeyboard();if(detailShowing&&detailPage!=null)detailHistory.addLast(detailPage);detailPage=()->showCollection(name,tracks,album,artist);detailShowing=true;backButton.setVisibility(View.VISIBLE);content.removeAllViews();heading.setText(album?"Альбом":artist?"Виконавець":name);subtitle.setVisibility(View.GONE);
         LinearLayout page=Ui.column(this);Ui.pad(page,16,0);LinearLayout header=Ui.column(this);header.setGravity(Gravity.CENTER_HORIZONTAL);Ui.pad(header,0,12);
         if(!tracks.isEmpty()){
             CoverView cover=new CoverView(this,tracks.get(0));cover.portrait(artist);cover.palette(color->page.setBackground(Ui.atmosphere(color)));LinearLayout.LayoutParams artSize=new LinearLayout.LayoutParams(dp(artist?120:160),dp(artist?120:160));artSize.gravity=Gravity.CENTER_HORIZONTAL;header.addView(cover,artSize);Ui.space(header,16);
@@ -234,15 +243,26 @@ public final class MainActivity extends Activity {
         page.addView(trackList(tracks,album,header),new LinearLayout.LayoutParams(-1,-1));content.addView(page);
     }
     private boolean ready(){if(player==null){message("Плеєр під’єднується…");return false;}return true;}
-    private void play(List<Track> tracks,int at){if(!ready()||tracks.isEmpty())return;rememberSearch();hideKeyboard();List<MediaItem> items=new ArrayList<>();for(Track track:tracks)items.add(PlaybackService.item(track));player.setMediaItems(items,at,0);player.prepare();player.play();}
-    private void toggle(){if(!ready())return;if(player.isPlaying())player.pause();else if(player.getMediaItemCount()>0){player.prepare();player.play();}else{openCategory("Композиції");}}
-    private void trackMenu(Track track){
+    private void play(List<Track> tracks,int at){
+        if(!ready()||tracks.isEmpty())return;rememberSearch();hideKeyboard();
+        boolean same=player.getMediaItemCount()==tracks.size();
+        if(same)for(int i=0;i<tracks.size();i++)if(!player.getMediaItemAt(i).mediaId.equals(tracks.get(i).id)){same=false;break;}
+        if(same)player.seekTo(at,0);else{List<MediaItem> items=new ArrayList<>();for(Track track:tracks)items.add(PlaybackService.item(track));player.setMediaItems(items,at,0);}
+        if(player.getPlaybackState()==Player.STATE_IDLE)player.prepare();player.play();
+    }
+    private void toggle(){if(!ready())return;if(player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED)player.pause();else if(player.getMediaItemCount()>0){if(player.getPlaybackState()==Player.STATE_ENDED)player.seekToDefaultPosition();player.prepare();player.play();}else{openCategory("Композиції");}}
+    private void trackMenu(Track track){trackMenu(track,-1);}
+    private void trackMenu(Track track,int playlistPosition){
         if(actionSheet!=null)actionSheet.dismiss();actionSheet=new Dialog(this);actionSheet.requestWindowFeature(Window.FEATURE_NO_TITLE);Dialog sheet=actionSheet;
         LinearLayout page=Ui.column(this);Ui.pad(page,16,12);page.setBackground(Ui.shape(this,Ui.SURFACE,24));
         View handle=new View(this);handle.setBackground(Ui.shape(this,Ui.MUTED,2));LinearLayout.LayoutParams handleSize=new LinearLayout.LayoutParams(dp(32),dp(4));handleSize.gravity=Gravity.CENTER_HORIZONTAL;handleSize.bottomMargin=dp(16);page.addView(handle,handleSize);
         LinearLayout header=Ui.row(this);header.addView(new CoverView(this,track),new LinearLayout.LayoutParams(dp(52),dp(52)));LinearLayout labels=Ui.column(this);Ui.pad(labels,12,0);TextView title=Ui.title(this,Ui.name(track.title),16);title.setMaxLines(2);labels.addView(title);Ui.space(labels,4);labels.addView(Ui.text(this,track.artist,13,Ui.MUTED));header.addView(labels,new LinearLayout.LayoutParams(0,-2,1));page.addView(header);Ui.space(page,12);
         sheetAction(page,sheet,"play","Відтворити",()->play(List.of(track),0));sheetAction(page,sheet,"next","Відтворити наступною",()->{if(ready())player.addMediaItem(Math.max(0,player.getCurrentMediaItemIndex()+1),PlaybackService.item(track));});
-        sheetAction(page,sheet,"queue","Додати в чергу",()->{if(ready())player.addMediaItem(PlaybackService.item(track));});Ui.divider(page);sheetAction(page,sheet,"heart",app.library.favorite(track.id)?"Прибрати з улюбленого":"Додати в улюблене",()->{app.library.toggleFavorite(track.id);updatePlayer();});
+        sheetAction(page,sheet,"queue","Додати в чергу",()->{if(ready())player.addMediaItem(PlaybackService.item(track));});Ui.divider(page);sheetAction(page,sheet,"heart",app.library.favorite(track.id)?"Прибрати з улюбленого":"Додати в улюблене",()->{app.social.toggleFavorite(track);updatePlayer();});
+        Library.Playlist playlist=playlistPosition>=0?app.library.playlistInfo(activePlaylist):null;
+        if(playlist!=null&&playlist.writable())sheetAction(page,sheet,"remove","Прибрати з цього плейлиста",()->playlistWork(()->{
+            if(playlist.remote())app.social.remove(playlist,playlistPosition,track);else app.library.removeFromPlaylist(playlist.id(),track.id);
+        },()->refreshPlaylist(playlist.id())));
         sheetAction(page,sheet,"plus","Додати до плейлиста",()->choosePlaylist(track));boolean offline=!app.library.offline(track.id).isEmpty();
         sheetAction(page,sheet,"download",offline?"Видалити офлайн-копію":"Завантажити офлайн",()->{if(!offline)download(track);else new AlertDialog.Builder(this).setMessage("Видалити завантажену копію? Оригінал залишиться у джерелі.").setNegativeButton("Скасувати",null).setPositiveButton("Видалити",(x,y)->{new File(app.library.offline(track.id)).delete();app.library.offline(track.id,"");render();}).show();});
         Ui.divider(page);sheetAction(page,sheet,"album","Перейти до альбому",()->{if(playerDialog!=null)playerDialog.dismiss();showAlbum(track);});
@@ -255,16 +275,57 @@ public final class MainActivity extends Activity {
     private String sourceName(String id){if(id.equals("device"))return "На пристрої";if(id.equals("files"))return "Імпортовані файли";if(id.equals("radio"))return "Радіо";try{Source s=app.sources.get(id);return s==null?"Видалене джерело":s.name;}catch(Exception e){return "Джерело";}}
     private void download(Track track){if(track.sourceId.equals("radio")){message("Радіопотік не має кінця й не завантажується як файл");return;}notificationPermission();startForegroundService(new Intent(this,DownloadService.class).putExtra("track",track.id));message("Додано до завантажень");}
     private void playlists(){
-        heading.setText("Плейлисти");LinearLayout column=scroll();List<String[]> entries=app.library.playlists();if(!entries.isEmpty())settingRow(column,"plus","Створити плейлист","",()->newPlaylist(null));
-        if(entries.isEmpty())column.addView(emptyState("queue","Ваші добірки","Зберіть улюблену музику у власний плейлист.","Створити плейлист",()->newPlaylist(null)));
-        for(String[] playlist:entries){long id=Long.parseLong(playlist[0]);List<Track> tracks=app.library.playlist(id);LinearLayout card=Ui.row(this);Ui.pad(card,0,8);CoverView art=new CoverView(this,tracks.isEmpty()?null:tracks.get(0));card.addView(art,new LinearLayout.LayoutParams(dp(56),dp(56)));LinearLayout text=Ui.column(this);Ui.pad(text,12,0);text.addView(Ui.title(this,playlist[1],16));Ui.space(text,4);text.addView(Ui.text(this,Ui.tracks(Integer.parseInt(playlist[2])),12,Ui.MUTED));card.addView(text,new LinearLayout.LayoutParams(0,-2,1));
-            Runnable remove=()->new AlertDialog.Builder(this).setTitle("Видалити «"+playlist[1]+"»?").setMessage("Аудіофайли залишаться в бібліотеці.").setNegativeButton("Скасувати",null).setPositiveButton("Видалити",(d,w)->{app.library.deletePlaylist(id);render();}).show();card.addView(icon("more","Меню плейлиста",()->new AlertDialog.Builder(this).setItems(new String[]{"Відкрити","Видалити"},(d,at)->{if(at==0)playlistPage(id,playlist[1]);else remove.run();}).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));card.setOnClickListener(v->playlistPage(id,playlist[1]));card.setOnLongClickListener(v->{remove.run();return true;});column.addView(card);}
+        heading.setText("Плейлисти");LinearLayout column=scroll();List<Library.Playlist> entries=app.library.playlistInfo();
+        settingRow(column,"plus","Створити плейлист","На телефоні або на сервері Subsonic",()->newPlaylist(null));
+        if(entries.isEmpty())column.addView(emptyState("queue","Ваші добірки","Оновіть Subsonic-джерело, щоб отримати плейлисти із сервера, або створіть власний.","",null));
+        for(Library.Playlist playlist:entries){Track first=app.library.playlistFirst(playlist.id());LinearLayout card=Ui.row(this);Ui.pad(card,0,8);
+            card.addView(new CoverView(this,first),new LinearLayout.LayoutParams(dp(56),dp(56)));
+            LinearLayout text=Ui.column(this);Ui.pad(text,12,0);text.addView(Ui.title(this,playlist.name(),16));Ui.space(text,4);
+            Source source=playlist.remote()?app.sources.get(playlist.source()):null;
+            text.addView(Ui.text(this,Ui.tracks(playlist.count())+" · "+(source==null?"На телефоні":source.name)+(playlist.writable()?"":" · лише читання"),12,Ui.MUTED));
+            card.addView(text,new LinearLayout.LayoutParams(0,-2,1));card.addView(icon("more","Меню плейлиста",()->playlistMenu(playlist)),new LinearLayout.LayoutParams(dp(48),dp(48)));
+            card.setOnClickListener(v->playlistPage(playlist.id(),playlist.name()));card.setOnLongClickListener(v->{playlistMenu(playlist);return true;});column.addView(card);
+        }
     }
-    private void playlistPage(long id,String name){List<Track> tracks=app.library.playlist(id);showTracks(name,tracks);}
-    private void newPlaylist(Track initial){EditText name=input("Назва плейлиста",false);new AlertDialog.Builder(this).setTitle("Новий плейлист").setView(name).setNegativeButton("Скасувати",null).setPositiveButton("Створити",(d,w)->{try{long id=app.library.createPlaylist(name.getText().toString());if(initial!=null)app.library.addToPlaylist(id,initial.id);render();}catch(Exception e){message("Назва порожня або вже використовується");}}).show();}
-    private void choosePlaylist(Track track){List<String[]> playlists=app.library.playlists();List<String> names=new ArrayList<>();names.add("＋ Новий плейлист");for(String[] p:playlists)names.add(p[1]);new AlertDialog.Builder(this).setTitle("Додати до плейлиста").setItems(names.toArray(new String[0]),(d,at)->{if(at==0)newPlaylist(track);else{app.library.addToPlaylist(Long.parseLong(playlists.get(at-1)[0]),track.id);message("Додано");}}).show();}
+    private void playlistMenu(Library.Playlist playlist){
+        String[] actions=playlist.writable()?new String[]{"Відкрити","Перейменувати","Видалити"}:new String[]{"Відкрити"};
+        new AlertDialog.Builder(this).setTitle(playlist.name()).setItems(actions,(d,at)->{
+            if(at==0)playlistPage(playlist.id(),playlist.name());
+            else if(at==1){EditText name=input("Назва плейлиста",false);name.setText(playlist.name());
+                new AlertDialog.Builder(this).setTitle("Перейменувати плейлист").setView(name).setNegativeButton("Скасувати",null).setPositiveButton("Зберегти",(x,y)->{
+                    String value=name.getText().toString().trim();if(value.isEmpty()){message("Введіть назву");return;}
+                    playlistWork(()->{if(playlist.remote())app.social.rename(playlist,value);else app.library.renamePlaylist(playlist.id(),value);},this::reload);
+                }).show();
+            }else new AlertDialog.Builder(this).setTitle("Видалити «"+playlist.name()+"»?").setMessage(playlist.remote()?"Плейлист буде видалено і на сервері. Аудіофайли залишаться.":"Аудіофайли залишаться в бібліотеці.").setNegativeButton("Скасувати",null).setPositiveButton("Видалити",(x,y)->playlistWork(()->{if(playlist.remote())app.social.delete(playlist);else app.library.deletePlaylist(playlist.id());},this::reload)).show();
+        }).show();
+    }
+    private void playlistPage(long id,String name){showTracks(name,app.library.playlist(id));activePlaylist=id;detailPage=()->playlistPage(id,name);}
+    private void refreshPlaylist(long id){render();Library.Playlist playlist=app.library.playlistInfo(id);if(playlist!=null)playlistPage(id,playlist.name());}
+    private interface PlaylistWork {void run() throws Exception;}
+    private void playlistWork(PlaylistWork work,Runnable after){
+        message("Оновлення плейлиста…");app.sync.execute(()->{try{work.run();app.main.post(()->{if(!isDestroyed()){after.run();message("Плейлист оновлено");}});}
+            catch(Exception error){app.main.post(()->{if(!isDestroyed())message("Не вдалося оновити плейлист. "+safeError(error)+" Оновіть джерело перед повторенням дії.");});}});
+    }
+    private void newPlaylist(Track initial){
+        LinearLayout form=Ui.column(this);Ui.pad(form,20,12);EditText name=input("Назва плейлиста",false);form.addView(name,new LinearLayout.LayoutParams(-1,-2));Ui.space(form,12);
+        List<Source> destinations=new ArrayList<>();List<String> labels=new ArrayList<>();labels.add("На телефоні");
+        for(Source source:app.sources.all())if(source.type==Source.Type.SUBSONIC&&(initial==null||source.id.equals(initial.sourceId))){destinations.add(source);labels.add(source.name+" · Subsonic");}
+        Spinner destination=new Spinner(this);ArrayAdapter<String> adapter=new ArrayAdapter<>(this,android.R.layout.simple_spinner_item,labels);adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);destination.setAdapter(adapter);form.addView(destination,new LinearLayout.LayoutParams(-1,dp(56)));if(initial!=null&&!destinations.isEmpty())destination.setSelection(1);
+        new AlertDialog.Builder(this).setTitle("Новий плейлист").setView(form).setNegativeButton("Скасувати",null).setPositiveButton("Створити",(d,w)->{
+            String value=name.getText().toString().trim();if(value.isEmpty()){message("Введіть назву");return;}
+            Source selected=destination.getSelectedItemPosition()==0?null:destinations.get(destination.getSelectedItemPosition()-1);
+            playlistWork(()->{if(selected!=null)app.social.create(selected,value,initial);else{long id=app.library.createPlaylist(value);if(initial!=null)app.library.addToPlaylist(id,initial.id);}},this::reload);
+        }).show();
+    }
+    private void choosePlaylist(Track track){
+        List<Library.Playlist> playlists=new ArrayList<>();List<String> names=new ArrayList<>();names.add("＋ Новий плейлист");
+        for(Library.Playlist playlist:app.library.playlistInfo())if(playlist.writable()&&(!playlist.remote()||playlist.source().equals(track.sourceId))){playlists.add(playlist);Source source=playlist.remote()?app.sources.get(playlist.source()):null;names.add(playlist.name()+" · "+(source==null?"На телефоні":source.name));}
+        new AlertDialog.Builder(this).setTitle("Додати до плейлиста").setItems(names.toArray(new String[0]),(d,at)->{
+            if(at==0)newPlaylist(track);else{Library.Playlist playlist=playlists.get(at-1);playlistWork(()->{if(playlist.remote())app.social.add(playlist,track);else app.library.addToPlaylist(playlist.id(),track.id);},this::reload);}
+        }).show();
+    }
     private void sources(){
-        heading.setText("Джерела музики");LinearLayout column=scroll();
+        heading.setText("Джерела музики");LinearLayout column=scroll();if(app.social.pendingCount>0)settingRow(column,"refresh","Очікують синхронізації","Улюблене: "+app.social.pendingCount+" змін · натисніть, щоб повторити",app.social::requestFlush);
         try{List<Source> sources=app.sources.all();if(!sources.isEmpty())label(column,"Медіасервери");for(Source source:sources){LinearLayout card=Ui.row(this);card.setBackground(Ui.ripple(this,Ui.SURFACE,16));Ui.pad(card,4,10);card.addView(icon("server",source.name,()->showTracks(source.name,matching(t->source.id.equals(t.sourceId)))),new LinearLayout.LayoutParams(dp(48),dp(48)));LinearLayout text=Ui.column(this);Ui.pad(text,8,0);text.addView(Ui.title(this,source.name,16));Ui.space(text,5);text.addView(Ui.text(this,source.type.name()+" · "+Ui.tracks(matching(t->source.id.equals(t.sourceId)).size()),12,Ui.MUTED));card.addView(text,new LinearLayout.LayoutParams(0,-2,1));card.addView(icon("refresh","Синхронізувати "+source.name,()->sync(source)),new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(icon("more","Меню джерела",()->sourceActions(source)),new LinearLayout.LayoutParams(dp(48),dp(48)));card.setOnClickListener(v->showTracks(source.name,matching(t->source.id.equals(t.sourceId))));column.addView(card);Ui.space(column,8);}}catch(Exception e){message(e.getMessage());}
         settingRow(column,"plus","Під’єднати сервер","Subsonic, Jellyfin, Plex та інші",()->sourceDialog(null));label(column,"На пристрої");settingRow(column,"music","Сканувати музику","Аудіофайли з медіатеки Android",this::scan);settingRow(column,"folder","Додати файли","Вибрати через файловий менеджер",this::importFiles);settingRow(column,"radio","Додати радіостанцію","Пряме посилання на аудіопотік",this::radio);
     }
@@ -273,8 +334,8 @@ public final class MainActivity extends Activity {
         SourceDialog.show(this,existing,source->{app.sources.save(source);sync(source);});
     }
 
-    private void sync(Source source){if(syncing){message("Дочекайтеся поточної синхронізації");return;}syncing=true;render();app.io.execute(()->{try{
-        List<Track> tracks=app.providers.synchronize(source,status->app.main.post(()->{if(!isDestroyed())subtitle.setText(status);}));app.library.merge(source.id,tracks,true);app.artwork.retryFailures();
+    private void sync(Source source){if(syncing){message("Дочекайтеся поточної синхронізації");return;}syncing=true;render();app.sync.execute(()->{try{
+        List<Track> tracks=app.providers.synchronize(source,status->app.main.post(()->{if(!isDestroyed())subtitle.setText(status);}));app.library.merge(source.id,tracks,true);app.social.synchronize(source);app.artwork.retryFailures();
         app.main.post(()->{syncing=false;message("Синхронізовано: "+Ui.tracks(tracks.size()));reload();});
     }catch(Exception e){app.main.post(()->{syncing=false;message("Не вдалося синхронізувати. "+safeError(e));render();});}});}
     private String safeError(Exception e){
@@ -308,9 +369,9 @@ public final class MainActivity extends Activity {
         scroll.setOnApplyWindowInsetsListener((view,insets)->{view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());return insets;});
         LinearLayout top=Ui.row(this);top.addView(icon("down","Згорнути плеєр",()->playerDialog.dismiss()));TextView caption=Ui.text(this,"Зараз відтворюється",14,Ui.MUTED);caption.setGravity(Gravity.CENTER);top.addView(caption,new LinearLayout.LayoutParams(0,-2,1));top.addView(icon("more","Дії з композицією",()->{MediaItem item=player.getCurrentMediaItem();if(item!=null){Track track=app.library.get(item.mediaId);if(track!=null)trackMenu(track);}}));page.addView(top);Ui.space(page,8);
         playerCover=new FrameLayout(this){@Override protected void onMeasure(int width,int height){int available=getResources().getDisplayMetrics().heightPixels-dp(landscape()?140:340);int size=Math.min(MeasureSpec.getSize(width),Math.min(dp(360),Math.max(dp(140),available)));super.onMeasure(MeasureSpec.makeMeasureSpec(size,MeasureSpec.EXACTLY),MeasureSpec.makeMeasureSpec(size,MeasureSpec.EXACTLY));}};
-        LinearLayout.LayoutParams coverSize=new LinearLayout.LayoutParams(-1,-2);coverSize.gravity=Gravity.CENTER_HORIZONTAL;page.addView(playerCover,coverSize);Ui.space(page,16);
+        LinearLayout.LayoutParams coverSize=new LinearLayout.LayoutParams(-1,-2);coverSize.gravity=Gravity.CENTER_HORIZONTAL;page.addView(playerCover,coverSize);playerArtwork=new CoverView(this);playerArtwork.urgent();playerArtwork.palette(color->page.setBackground(Ui.atmosphere(color)));playerCover.addView(playerArtwork,new FrameLayout.LayoutParams(-1,-1));Ui.space(page,16);
         LinearLayout titleRow=Ui.row(this);LinearLayout labels=Ui.column(this);playerTitle=Ui.title(this,"",22);playerTitle.setSingleLine(true);playerTitle.setEllipsize(android.text.TextUtils.TruncateAt.MARQUEE);playerTitle.setMarqueeRepeatLimit(-1);playerTitle.setSelected(true);labels.addView(playerTitle);Ui.space(labels,4);playerArtist=Ui.text(this,"",15,Ui.ACCENT);playerArtist.setSingleLine(true);playerArtist.setEllipsize(android.text.TextUtils.TruncateAt.END);labels.addView(playerArtist);Ui.space(labels,5);playerAlbum=Ui.text(this,"",13,Ui.MUTED);playerAlbum.setSingleLine(true);playerAlbum.setEllipsize(android.text.TextUtils.TruncateAt.END);labels.addView(playerAlbum);titleRow.addView(labels,new LinearLayout.LayoutParams(0,-2,1));
-        favoriteButton=icon("heart","Додати або прибрати з улюбленого",()->{MediaItem item=player.getCurrentMediaItem();if(item!=null){app.library.toggleFavorite(item.mediaId);updatePlayer();}});titleRow.addView(favoriteButton);page.addView(titleRow);Ui.space(page,16);
+        favoriteButton=icon("heart","Додати або прибрати з улюбленого",()->{MediaItem item=player.getCurrentMediaItem();if(item!=null){Track track=app.library.get(item.mediaId);if(track!=null)app.social.toggleFavorite(track);updatePlayer();}});titleRow.addView(favoriteButton);page.addView(titleRow);Ui.space(page,16);
         playerSeek=new SeekBar(this);playerSeek.setMax(1000);playerSeek.setProgressTintList(android.content.res.ColorStateList.valueOf(Ui.ACCENT));playerSeek.setThumbTintList(android.content.res.ColorStateList.valueOf(Ui.ACCENT));playerSeek.setContentDescription("Позиція відтворення");page.addView(playerSeek);
         LinearLayout times=Ui.row(this);playerTime=Ui.text(this,"",12,Ui.MUTED);playerRemaining=Ui.text(this,"",12,Ui.MUTED);times.addView(playerTime,new LinearLayout.LayoutParams(0,-2,1));times.addView(playerRemaining);Ui.pad(times,8,0);page.addView(times);
         playerSeek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener(){public void onProgressChanged(SeekBar s,int value,boolean user){if(user&&player!=null&&player.getDuration()>0)updateTimes(player.getDuration()*value/1000,player.getDuration());}public void onStartTrackingTouch(SeekBar s){seeking=true;}public void onStopTrackingTouch(SeekBar s){if(player!=null&&player.getDuration()>0)player.seekTo(player.getDuration()*s.getProgress()/1000);seeking=false;}});
@@ -324,22 +385,22 @@ public final class MainActivity extends Activity {
             while(page.getChildCount()>2){View child=page.getChildAt(2);page.removeViewAt(2);if(child==playerCover){afterCover=true;continue;}if(afterCover){afterCover=false;continue;}controlsPage.addView(child);}
             LinearLayout split=Ui.row(this);int art=Math.min(dp(260),Math.max(dp(140),getResources().getDisplayMetrics().heightPixels-dp(140)));split.addView(playerCover,new LinearLayout.LayoutParams(art,art));LinearLayout.LayoutParams bodySize=new LinearLayout.LayoutParams(0,-2,1);bodySize.leftMargin=dp(24);split.addView(controlsPage,bodySize);page.addView(split);
         }
-        playerDialog.setContentView(scroll);playerDialog.setOnDismissListener(d->{playerSeek=null;playerTitle=null;playerCover=null;displayedId="";seeking=false;});playerDialog.show();playerDialog.getWindow().setLayout(-1,-1);displayedId="";updatePlayer();
+        playerDialog.setContentView(scroll);playerDialog.setOnDismissListener(d->{root.setVisibility(View.VISIBLE);miniId="";playerSeek=null;playerTitle=null;playerCover=null;playerArtwork=null;displayedId="";seeking=false;if(!isDestroyed())updatePlayer();});playerDialog.show();root.setVisibility(View.INVISIBLE);playerDialog.getWindow().setLayout(-1,-1);displayedId="";updatePlayer();
     }
     private void highlightPlaying(View view,String id){
         if(view instanceof TrackRowView row){row.nowPlaying(id.equals(row.getTag()));return;}
         if(view instanceof ViewGroup group)for(int i=0;i<group.getChildCount();i++)highlightPlaying(group.getChildAt(i),id);
     }
-    private void updateTimes(long position,long duration){playerTime.setText(Protocol.time(position));playerRemaining.setText("−"+Protocol.time(Math.max(0,duration-position)));}
+    private void updateTimes(long position,long duration){String elapsed=Protocol.time(position),remaining="−"+Protocol.time(Math.max(0,duration-position));if(!elapsed.contentEquals(playerTime.getText()))playerTime.setText(elapsed);if(!remaining.contentEquals(playerRemaining.getText()))playerRemaining.setText(remaining);}
     private void updatePlayer(){
-        if(player==null)return;MediaItem item=player.getCurrentMediaItem();boolean playing=player.isPlaying();miniPlay.icon(playing?"pause":"play");miniPlay.setContentDescription(playing?"Пауза":"Відтворити");
-        playerCard.setVisibility(item==null?View.GONE:View.VISIBLE);if(item==null){miniTitle.setText("Оберіть композицію");miniArtist.setText("Відкрити бібліотеку");miniProgress.setProgress(0);miniCover.bind(null);miniId="";highlightPlaying(content,"");if(playerDialog!=null&&playerDialog.isShowing())playerDialog.dismiss();return;}
-        miniTitle.setText(Ui.name(item.mediaMetadata.title));miniArtist.setText(item.mediaMetadata.artist);Track current=app.library.get(item.mediaId);long duration=player.getDuration()>0?player.getDuration():current==null?0:current.durationMs,position=Math.max(0,player.getCurrentPosition());int percent=duration>0?(int)(position*1000/duration):0;miniProgress.setProgress(percent);
-        if(!miniId.equals(item.mediaId)){miniId=item.mediaId;miniCover.bind(app.library.get(item.mediaId));highlightPlaying(content,miniId);}
-        if(playerTitle!=null){playerTitle.setText(Ui.name(item.mediaMetadata.title));playerArtist.setText(item.mediaMetadata.artist);playerAlbum.setText(Ui.album(item.mediaMetadata.albumTitle==null?"":item.mediaMetadata.albumTitle.toString()));playerPlay.icon(playing?"pause":"play");playerPlay.setContentDescription(playing?"Пауза":"Відтворити");
+        if(player==null)return;MediaItem item=player.getCurrentMediaItem();boolean playing=player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED;boolean buffering=player.getPlaybackState()==Player.STATE_BUFFERING;if(miniProgress.isIndeterminate()!=buffering)miniProgress.setIndeterminate(buffering);miniPlay.icon(playing?"pause":"play");if(!android.text.TextUtils.equals(miniPlay.getContentDescription(),playing?"Пауза":"Відтворити"))miniPlay.setContentDescription(playing?"Пауза":"Відтворити");
+        playerCard.setVisibility(item==null?View.GONE:View.VISIBLE);if(item==null){miniTitle.setText("Оберіть композицію");miniArtist.setText("Відкрити бібліотеку");miniProgress.setProgress(0);handler.removeCallbacks(bindArtwork);pendingArtwork=null;miniCover.bind(null);miniId="";highlightPlaying(content,"");if(playerDialog!=null&&playerDialog.isShowing())playerDialog.dismiss();return;}
+        Track current=app.library.get(item.mediaId);long duration=player.getDuration()>0?player.getDuration():current==null?0:current.durationMs,position=Math.max(0,player.getCurrentPosition());int percent=duration>0?(int)(position*1000/duration):0;miniProgress.setProgress(percent);
+        if(!miniId.equals(item.mediaId)){miniId=item.mediaId;miniTitle.setText(Ui.name(item.mediaMetadata.title));miniArtist.setText(item.mediaMetadata.artist);queueArtwork(current);highlightPlaying(content,miniId);}
+        if(playerTitle!=null){if(!displayedId.equals(item.mediaId)){playerTitle.setText(Ui.name(item.mediaMetadata.title));playerArtist.setText(item.mediaMetadata.artist);playerAlbum.setText(Ui.album(item.mediaMetadata.albumTitle==null?"":item.mediaMetadata.albumTitle.toString()));}playerPlay.icon(playing?"pause":"play");if(!android.text.TextUtils.equals(playerPlay.getContentDescription(),playing?"Пауза":"Відтворити"))playerPlay.setContentDescription(playing?"Пауза":"Відтворити");
             if(!seeking){playerSeek.setProgress(percent);updateTimes(position,duration);}playerSeek.setEnabled(player.getDuration()>0&&player.isCurrentMediaItemSeekable());
-            shuffleButton.active(settings.getBoolean("shuffle",false));int repeat=settings.getInt("repeat",0);repeatButton.active(repeat!=0);repeatButton.icon(repeat==1?"repeat1":"repeat");repeatButton.setContentDescription(new String[]{"Повтор вимкнено","Повтор композиції","Повтор черги"}[repeat]);favoriteButton.active(app.library.favorite(item.mediaId));
-            if(!displayedId.equals(item.mediaId)){displayedId=item.mediaId;playerCover.removeAllViews();CoverView cover=new CoverView(this,app.library.get(item.mediaId));View background=(View)playerCover.getParent();cover.palette(color->background.setBackground(Ui.atmosphere(color)));playerCover.addView(cover,new FrameLayout.LayoutParams(-1,-1));}}
+            shuffleButton.active(settings.getBoolean("shuffle",false));int repeat=settings.getInt("repeat",0);repeatButton.active(repeat!=0);repeatButton.icon(repeat==1?"repeat1":"repeat");String description=new String[]{"Повтор вимкнено","Повтор композиції","Повтор черги"}[repeat];if(!android.text.TextUtils.equals(repeatButton.getContentDescription(),description))repeatButton.setContentDescription(description);favoriteButton.active(app.library.favorite(item.mediaId));
+            if(!displayedId.equals(item.mediaId)){displayedId=item.mediaId;queueArtwork(current);}}
     }
     private void repeat(){int repeat=(settings.getInt("repeat",0)+1)%3;settings.edit().putInt("repeat",repeat).apply();updatePlayer();message(new String[]{"Повтор вимкнено","Повтор композиції","Повтор черги"}[repeat]);}
     private void queue(){if(ready()&&(queueDialog==null||!queueDialog.isShowing()))queueDialog=QueueDialog.show(this,player);}

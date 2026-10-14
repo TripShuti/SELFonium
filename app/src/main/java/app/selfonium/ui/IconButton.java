@@ -17,8 +17,8 @@ final class IconButton extends View {
         setBackground(new RippleDrawable(ColorStateList.valueOf((Ui.ACCENT&0xFFFFFF)|0x33000000),null,Ui.shape(context,0xFFFFFFFF,30)));
         setOnClickListener(v->action.run());
     }
-    void icon(String value){icon=value;invalidate();}
-    void active(boolean value){color=value?Ui.ACCENT:Ui.MUTED;setSelected(value);invalidate();}
+    void icon(String value){if(value.equals(icon))return;icon=value;invalidate();}
+    void active(boolean value){int next=value?Ui.ACCENT:Ui.MUTED;if(color==next&&isSelected()==value)return;color=next;setSelected(value);invalidate();}
     void primary(){filled=true;color=Ui.ON_ACCENT;setBackground(new RippleDrawable(ColorStateList.valueOf(0x33000000),Ui.shape(getContext(),Ui.ACCENT,40),null));invalidate();}
     @Override public CharSequence getAccessibilityClassName(){return android.widget.Button.class.getName();}
     @Override protected void onMeasure(int w,int h){setMeasuredDimension(resolveSize(Ui.dp(getContext(),48),w),resolveSize(Ui.dp(getContext(),48),h));}
@@ -41,6 +41,7 @@ final class IconButton extends View {
             case "equalizer"->{for(int i=0;i<3;i++){float x=5+i*7,y=i==1?15:8;line(c,x,3,x,y-3);line(c,x,y+3,x,21);c.drawCircle(x,y,2.5f,paint);}}
             case "settings"->{c.drawCircle(12,12,7,paint);c.drawCircle(12,12,2.5f,paint);for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);line(c,12,2,12,5);c.restore();}}
             case "search"->{c.drawCircle(10,10,6,paint);line(c,15,15,21,21);}
+            case "remove"->{line(c,5,12,19,12);}
             case "plus"->{line(c,12,5,12,19);line(c,5,12,19,12);}
             case "filter"->{line(c,3,5,21,5);line(c,6,12,18,12);line(c,10,19,14,19);}
             case "sort"->{line(c,5,3,5,21);line(c,2,17,5,21);line(c,5,21,8,17);line(c,12,5,22,5);line(c,12,12,19,12);line(c,12,19,16,19);}

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.6.0
+
+- Reuse matching playback queues; move queue serialization, restore and checkpoints off the UI thread.
+- Cache track/favorite/source lookups, reuse and coalesce player artwork, avoid repainting the obscured library, prioritize active covers and skip canceled requests.
+- Add a bounded 192 MB audio cache and cancelable prefetch of the next track's first 512 KB; lower startup buffering threshold and show buffering state.
+- Import Subsonic/Navidrome track stars and server playlists; send stars/unstar changes through a durable, revision-checked outbox.
+- Create, rename, add/remove tracks and delete owned server playlists; keep local playlists and read-only shared playlists distinct.
+- Preserve server playlist order and duplicate entries with SQLite v3 migration; protect pending likes from incoming server snapshots.
+- Add real HTTP provider fixtures and migration/outbox tests; log playback state, readiness and underruns without track URLs or credentials.
+
 ## 0.5.1
 
 - Initial public APK release as SELFonium-0.5.1.apk, with a direct download and installation steps in the README.

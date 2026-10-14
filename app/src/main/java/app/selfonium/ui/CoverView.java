@@ -13,10 +13,11 @@ public final class CoverView extends View {
     private final RectF bounds=new RectF(),imageBounds=new RectF();
     private final Path clip=new Path();
     private Track track;private Bitmap bitmap;private ArtworkRepository.Ticket request;
-    private int background=Ui.RAISED;private boolean square,portrait;
+    private int background=Ui.RAISED;private boolean square,portrait,urgent;
     private java.util.function.IntConsumer palette;
     public CoverView(Context context){super(context);setImportantForAccessibility(IMPORTANT_FOR_ACCESSIBILITY_NO);}
     public CoverView(Context context,Track track){this(context);bind(track);}
+    public void urgent(){urgent=true;}
     public void square(){square=true;requestLayout();}
     public void portrait(boolean value){portrait=value;updateClip();invalidate();}
     public void palette(java.util.function.IntConsumer listener){palette=listener;if(bitmap!=null)publishPalette();}
@@ -26,17 +27,19 @@ public final class CoverView extends View {
     public void bind(Track value){
         if(track!=null&&value!=null&&track.id.equals(value.id)&&track.artwork.equals(value.artwork)&&(bitmap!=null||request!=null))return;
         if(request!=null){request.cancel();request=null;}
-        track=value;bitmap=null;
+        boolean sameCover=track!=null&&value!=null&&!value.artwork.isEmpty()&&track.sourceId.equals(value.sourceId)&&track.artwork.equals(value.artwork);
+        track=value;
+        if(!sameCover)bitmap=((SelfoniumApp)getContext().getApplicationContext()).artwork.peek(value);
         int hue=Math.floorMod(value==null?0:(value.album+value.artist).hashCode(),360);
         background=Color.HSVToColor(new float[]{hue,.24f,.27f});invalidate();
-        if(isAttachedToWindow())load();
+        if(bitmap!=null)publishPalette();else if(isAttachedToWindow())load();
     }
     private void load(){
         if(track==null||bitmap!=null||request!=null)return;
         Track requested=track;
         request=((SelfoniumApp)getContext().getApplicationContext()).artwork.load(track,image->{
             if(track==requested){bitmap=image;request=null;publishPalette();invalidate();}
-        });
+        },urgent);
     }
     @Override protected void onAttachedToWindow(){super.onAttachedToWindow();load();}
     @Override protected void onDetachedFromWindow(){if(request!=null){request.cancel();request=null;}super.onDetachedFromWindow();}

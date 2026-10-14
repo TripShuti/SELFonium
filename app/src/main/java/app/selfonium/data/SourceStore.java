@@ -20,6 +20,9 @@ import javax.crypto.spec.GCMParameterSpec;
 /** Credentials stay in private storage encrypted with a non-exportable Android Keystore key. */
 public final class SourceStore {
     private final SharedPreferences prefs;
+    private List<Source> cached;
+    private static Source copy(Source source){Source result=new Source(source.id,source.name,source.type,source.baseUrl,source.username,source.password);result.token=source.token;result.userId=source.userId;return result;}
+    private List<Source> snapshot(){List<Source> result=new ArrayList<>();for(Source s:cached)result.add(copy(s));return result;}
     private static final String ALIAS="selfonium.sources.v1";
     public SourceStore(Context context) {prefs=context.getSharedPreferences("sources",Context.MODE_PRIVATE);}
     private SecretKey key() throws Exception {
@@ -33,8 +36,9 @@ public final class SourceStore {
         return (SecretKey)store.getKey(ALIAS,null);
     }
     public synchronized List<Source> all() {
+        if(cached!=null)return snapshot();
         String encrypted=prefs.getString("vault","");List<Source> result=new ArrayList<>();
-        if(encrypted.isEmpty())return result;
+        if(encrypted.isEmpty()){cached=result;return snapshot();}
         try {
             String[] parts=encrypted.split(":");Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(parts[0],Base64.NO_WRAP)));
@@ -43,7 +47,7 @@ public final class SourceStore {
                 JSONObject o=array.getJSONObject(i);Source source=new Source(o.getString("id"),o.getString("name"),Source.Type.valueOf(o.getString("type")),o.getString("url"),o.optString("user"),o.optString("password"));
                 source.token=o.optString("token");source.userId=o.optString("userId");result.add(source);
             }
-            return result;
+            cached=result;return snapshot();
         }catch(Exception e){throw new IllegalStateException("Не вдалося відкрити сховище джерел. Дані не перезаписано.");}
     }
     public synchronized Source get(String id) {for(Source s:all())if(s.id.equals(id))return s;return null;}
@@ -56,6 +60,7 @@ public final class SourceStore {
             Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());
             String payload=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP)+":"+Base64.encodeToString(cipher.doFinal(array.toString().getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP);
             if(!prefs.edit().putString("vault",payload).commit())throw new IllegalStateException("Storage unavailable");
+            cached=new ArrayList<>();for(Source source:values)cached.add(copy(source));
         }catch(Exception e){throw new IllegalStateException("Не вдалося зберегти джерела");}
     }
 }

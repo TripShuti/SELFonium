@@ -40,6 +40,8 @@ public final class LocalizationTest extends InstrumentationTestCase {
         Context context=getInstrumentation().getTargetContext();
         assertEquals("Мій плейлист",Texts.metadata(context,"Мій плейлист"));
         assertEquals("Rock",Texts.metadata(context,"Rock"));
+        assertEquals("Artist",Texts.metadata(context,new StringBuilder("Artist")));
+        assertEquals("",Texts.metadata(context,null));
         assertTrue(Texts.get(context,R.string.ui_custom_color_06x).contains("%06X"));
         assertFalse(Texts.get(context,R.string.ui_custom_color_06x,0xABCDEF).contains("%06X"));
     }

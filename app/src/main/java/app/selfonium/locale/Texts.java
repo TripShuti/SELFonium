@@ -20,8 +20,9 @@ public final class Texts {
             try{for(int i=0;i<keys.length;i++)map.put(keys[i],ids.getResourceId(i,0));}finally{ids.recycle();}legacy=Collections.unmodifiableMap(map);
         }return legacy;
     }
-    public static String metadata(Context context,String value){
-        if(value==null)return "";
+    public static String metadata(Context context,CharSequence raw){
+        if(raw==null)return "";
+        String value=raw.toString();
         // Old library snapshots store these synthetic missing-metadata placeholders.
         if(value.equals("Без назви")||value.equals("Невідомий виконавець")||value.equals("Без альбому"))return known(context,value);
         if(value.equals("Аудіофайл"))return get(context,R.string.ui_audio_file);

@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.6.4
+
+- Fix Media3 artist metadata localization for CharSequence values.
+
 - Add English, Ukrainian, Polish, German, French and Spanish UI resources, localized quantities and equalizer preset labels.
 - Follow supported device languages with an English fallback, and add a persistent language selector using Android 13 per-app language settings where available. Keep navigation and preset storage keys unchanged.
 

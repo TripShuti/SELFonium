@@ -2,10 +2,14 @@
 
 ## Unreleased
 
+## 0.6.3
+
+- Package version 0.6.3 (versionCode 10) with the existing signing identity; music-player functionality is unchanged from 0.6.2.
+
 - Remove the cache-specific Android checker, custom SDK bootstrap and redundant release wrapper; use SDK tools, Gradle and the release CLI directly.
 
 - Add CI for main pushes and pull requests with Gradle caching, host tests, Android build/lint checks and debug artifacts.
-- Prepare a gated tag-release pipeline with reviewed-main validation, increasing versionCode, isolated signing, verified APK assets and draft publication. Automatic publication remains disabled by default.
+- Prepare a gated tag-release pipeline with reviewed-main validation, increasing versionCode, isolated signing, verified APK assets and draft publication. Publication requires explicit activation and protected-environment approval.
 - Rewrite repository documentation in English and document the current Subsonic/OpenSubsonic scope and limitations.
 
 - Add local release automation with a pinned signing certificate, package/version/debuggable checks, ZIP alignment, signature verification and SHA-256/source manifests.

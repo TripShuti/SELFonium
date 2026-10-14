@@ -25,7 +25,7 @@ Screenshots show version 0.5.1. Later versions refine the layout and source setu
 
 ## Install
 
-Download the APK from [GitHub Releases](https://github.com/TripShuti/SELFonium/releases/latest), open it on your phone and allow installation from that source if Android asks. The current published release is **0.6.2**, with asset `SELFonium-0.6.2.apk`.
+Download the APK from [GitHub Releases](https://github.com/TripShuti/SELFonium/releases/latest), open it on your phone and allow installation from that source if Android asks. New releases provide an APK named `SELFonium-v<version>.apk`. Older releases may omit the `v` in the asset filename.
 
 Requirements: **Android 8.0 or later (API 26)**. Remote playback needs a compatible server account and network access; downloaded and local files can play offline. Grant audio-library and notification permissions when needed.
 

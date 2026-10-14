@@ -56,8 +56,8 @@ public final class Library extends SQLiteOpenHelper {
                 if(db.update("tracks",v,"id=?",new String[]{track.id})==0)db.insertOrThrow("tracks",null,v);
                 ContentValues id=new ContentValues();id.put("id",track.id);db.insertWithOnConflict("sync_ids",null,id,SQLiteDatabase.CONFLICT_IGNORE);
             }
-            // Keep downloaded tracks even when a server temporarily removes them.
-            if(prune)db.delete("tracks","source=? AND offline='' AND id NOT IN (SELECT id FROM sync_ids)",new String[]{source});
+            // Never prune downloads, favorites, playlist entries or durable pending actions.
+            if(prune)db.delete("tracks","source=? AND offline='' AND favorite=0 AND id NOT IN (SELECT track FROM favorite_outbox) AND id NOT IN (SELECT track FROM playlist_tracks) AND id NOT IN (SELECT id FROM sync_ids)",new String[]{source});
             db.delete("sync_ids",null,null); db.setTransactionSuccessful();
             if(prune){Set<String> kept=new HashSet<>();try(Cursor c=db.rawQuery("SELECT id FROM tracks WHERE source=?",new String[]{source})){while(c.moveToNext())kept.add(c.getString(0));}
                 trackCache.entrySet().removeIf(e->{boolean removed=source.equals(e.getValue().sourceId)&&!kept.contains(e.getKey());if(removed)favoriteCache.remove(e.getKey());return removed;});}

@@ -41,6 +41,19 @@ public final class CoreTest {
         check(EqualizerCurve.preset(3,12000,-1500,1500)>EqualizerCurve.preset(3,1000,-1500,1500),"treble preset weights high frequencies");
         check(EqualizerCurve.preset(2,1000,-1500,1500)>EqualizerCurve.preset(2,60,-1500,1500),"vocal preset weights mids");
         check(EqualizerCurve.preset(1,60,-100,100)==100,"preset respects narrow gain range");
+        var queue=java.util.List.of("removed","current","next");
+        var restored=QueueRestore.resolve(queue,1,42_000,id->!id.equals("removed"));
+        check(restored.ids().equals(java.util.List.of("current","next"))&&restored.index()==0&&restored.position()==42_000,"restore selected track after earlier removal");
+        restored=QueueRestore.resolve(queue,1,42_000,id->!id.equals("current"));
+        check(restored.ids().get(restored.index()).equals("next")&&restored.position()==0,"replacement track does not inherit removed track position");
+        restored=QueueRestore.resolve(queue,2,42_000,id->id.equals("current"));
+        check(restored.index()==0&&restored.position()==0,"fallback to surviving previous track starts at zero");
+        restored=QueueRestore.resolve(queue,1,42_000,id->false);
+        check(restored.ids().isEmpty()&&restored.index()==0&&restored.position()==0,"empty restored queue");
+        check(QueueRestore.resolve(queue,99,42_000,id->true).position()==0,"invalid stored index cannot apply unrelated position");
+        check(QueueRestore.resolve(queue,1,-1,id->true).position()==0,"negative position clamped");
+        restored=QueueRestore.resolve(java.util.List.of("a","a","b"),1,900,id->true);
+        check(restored.index()==1&&restored.ids().size()==3&&restored.position()==900,"repeated queue entries retain selected occurrence");
         System.out.println("PASS: "+checks+" core checks");
     }
 }

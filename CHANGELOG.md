@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 0.6.2
+
+- Rename the application protocol field to `subsonic`; add debug-only discovery diagnostics that distinguish API, HTTP, network and malformed-response failures without URLs or credentials.
+- Fetch albums in bounded batches of three, preserve server order and stop incomplete catalog snapshots from reaching the library. Keep catalog work separate from serialized favorite/playlist operations.
+- Reject malformed catalog, favorite and playlist arrays instead of treating them as empty snapshots.
+- Preserve pending favorite actions, favorites, playlist entries and downloads when pruning missing catalog tracks.
+- Save timeline/index/position together, checkpoint pauses and seeks, and reset position when restoring a queue whose selected track was removed.
+- Show a retryable play action after playback failure; retry preparation with one tap instead of requiring a pause first.
+- Add a 3000-album concurrent HTTP fixture, safe-diagnostic failures, queue-remapping checks and collection-preserving prune tests.
+
 ## 0.6.1
 
 - Focus remote sources on Subsonic/OpenSubsonic, with Navidrome as the primary tested server; remove Jellyfin, Emby, Plex, WebDAV, Kodi and Audiobookshelf adapters and connection choices.

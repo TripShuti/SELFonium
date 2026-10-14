@@ -95,3 +95,21 @@ assert v2.execute('SELECT artwork,favorite,offline,played FROM tracks').fetchone
 assert v2.execute('SELECT * FROM playlist_tracks').fetchone()==(1,'v2',0)
 assert v2.execute('PRAGMA foreign_key_check').fetchall()==[]
 print('PASS: v2 -> v3 preserves artwork, favorites, downloads, history and existing playlist order')
+
+# Catalog pruning must not cascade-delete offline social actions or saved collections.
+prune=re.search(r'delete\("tracks","([^"\n]+sync_ids[^"\n]+)"',method('merge')).group(1)
+protected=sqlite3.connect(':memory:');protected.execute('PRAGMA foreign_keys=ON')
+for sql in sqls(method('onCreate'))+sqls(method('createSocialTables')):protected.execute(sql)
+protected.execute('CREATE TEMP TABLE sync_ids(id TEXT PRIMARY KEY)')
+for track in ['pending','liked','downloaded','listed','gone','other']:
+ protected.execute('INSERT INTO tracks(id,source,title) VALUES (?,?,?)',(track,'other' if track=='other' else 'server',track))
+protected.execute("INSERT INTO favorite_outbox VALUES ('pending',0,2)")
+protected.execute("UPDATE tracks SET favorite=1 WHERE id='liked'")
+protected.execute("UPDATE tracks SET offline='/saved' WHERE id='downloaded'")
+protected.execute("INSERT INTO playlists VALUES (1,'Local')")
+protected.execute("INSERT INTO playlist_tracks VALUES (1,'listed',0)")
+protected.execute('DELETE FROM tracks WHERE '+prune,('server',))
+assert {row[0] for row in protected.execute('SELECT id FROM tracks')}=={'pending','liked','downloaded','listed','other'}
+assert protected.execute('SELECT value,revision FROM favorite_outbox').fetchall()==[(0,2)]
+assert protected.execute('PRAGMA foreign_key_check').fetchall()==[]
+print('PASS: catalog pruning preserves pending likes, favorites, playlist entries and downloads')

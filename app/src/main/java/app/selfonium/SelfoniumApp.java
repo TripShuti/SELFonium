@@ -15,17 +15,20 @@ import java.util.concurrent.Executors;
 public final class SelfoniumApp extends Application {
     public Library library;
     public SourceStore sources;
-    public SubsonicClient providers;
+    public SubsonicClient subsonic;
     public ArtworkRepository artwork;
     public SocialSync social;
     public AudioRepository audio;
+    public final ExecutorService catalog = Executors.newSingleThreadExecutor();
     public final ExecutorService sync = Executors.newSingleThreadExecutor();
     public final ExecutorService io = Executors.newSingleThreadExecutor();
     public final Handler main = new Handler(Looper.getMainLooper());
     @Override public void onCreate() {
         super.onCreate();
-        library = new Library(this); sources = new SourceStore(this); providers = new SubsonicClient(sources);
-        artwork = new ArtworkRepository(this, library, providers);
+        library = new Library(this); sources = new SourceStore(this); subsonic = new SubsonicClient(sources,message->{
+            if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0)android.util.Log.d("SELFoniumSubsonic",message);
+        });
+        artwork = new ArtworkRepository(this, library, subsonic);
         audio=new AudioRepository(this,library,sources);
         social = new SocialSync(this);social.requestFlush();
         android.net.ConnectivityManager connectivity=getSystemService(android.net.ConnectivityManager.class);

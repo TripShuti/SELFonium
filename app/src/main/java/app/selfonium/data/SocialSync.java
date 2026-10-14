@@ -53,7 +53,7 @@ public final class SocialSync {
             if(onlySource!=null&&!onlySource.equals(change.source()))continue;
             try{
                 Source source=app.sources.get(change.source());if(source==null||source.type!=Source.Type.SUBSONIC)continue;
-                app.providers.star(source,change.remoteId(),change.value());app.library.acknowledgeFavorite(change);
+                app.subsonic.star(source,change.remoteId(),change.value());app.library.acknowledgeFavorite(change);
             }catch(Exception failure){if(first==null)first=failure;}
         }
         if(first!=null)throw first;
@@ -64,8 +64,8 @@ public final class SocialSync {
         app.library.seedFavorites(source.id);
         // Failed pushes stay in the outbox and are excluded from incoming favorite updates.
         try{flushFavorites(source.id);}catch(Exception error){requestFlush();}
-        List<Track> starred=app.providers.starred(source);
-        List<ServerPlaylist> playlists=app.providers.playlists(source);
+        List<Track> starred=app.subsonic.starred(source);
+        List<ServerPlaylist> playlists=app.subsonic.playlists(source);
         app.library.importFavorites(source.id,starred);app.library.importPlaylists(source.id,source.username,playlists);
         pendingCount=app.library.pendingFavorites().size();changed("");
     }
@@ -75,13 +75,13 @@ public final class SocialSync {
     }
     public void create(Source source,String name,Track initial) throws Exception {
         if(initial!=null&&!initial.sourceId.equals(source.id))throw new java.io.IOException("Композиція належить іншому джерелу");
-        ServerPlaylist playlist=app.providers.createPlaylist(source,name,initial);app.library.importPlaylist(source.id,source.username,playlist);
+        ServerPlaylist playlist=app.subsonic.createPlaylist(source,name,initial);app.library.importPlaylist(source.id,source.username,playlist);
     }
     public void add(Library.Playlist playlist,Track track) throws Exception {
         Source source=server(playlist);if(!source.id.equals(track.sourceId))throw new java.io.IOException("Композиція належить іншому джерелу");
-        app.library.importPlaylist(source.id,source.username,app.providers.addToPlaylist(source,playlist.remoteId(),track));
+        app.library.importPlaylist(source.id,source.username,app.subsonic.addToPlaylist(source,playlist.remoteId(),track));
     }
-    public void rename(Library.Playlist playlist,String name) throws Exception {Source source=server(playlist);app.library.importPlaylist(source.id,source.username,app.providers.renamePlaylist(source,playlist.remoteId(),name));}
-    public void remove(Library.Playlist playlist,int position,Track track) throws Exception {Source source=server(playlist);app.library.importPlaylist(source.id,source.username,app.providers.removeFromPlaylist(source,playlist.remoteId(),position,track.remoteId));}
-    public void delete(Library.Playlist playlist) throws Exception {Source source=server(playlist);app.providers.deletePlaylist(source,playlist.remoteId());app.library.deletePlaylist(playlist.id());}
+    public void rename(Library.Playlist playlist,String name) throws Exception {Source source=server(playlist);app.library.importPlaylist(source.id,source.username,app.subsonic.renamePlaylist(source,playlist.remoteId(),name));}
+    public void remove(Library.Playlist playlist,int position,Track track) throws Exception {Source source=server(playlist);app.library.importPlaylist(source.id,source.username,app.subsonic.removeFromPlaylist(source,playlist.remoteId(),position,track.remoteId));}
+    public void delete(Library.Playlist playlist) throws Exception {Source source=server(playlist);app.subsonic.deletePlaylist(source,playlist.remoteId());app.library.deletePlaylist(playlist.id());}
 }

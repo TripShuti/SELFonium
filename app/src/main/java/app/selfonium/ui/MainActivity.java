@@ -63,7 +63,7 @@ public final class MainActivity extends Activity {
         controllerFuture.addListener(()->{
             try{player=controllerFuture.get();player.addListener(new Player.Listener(){
                 @Override public void onEvents(Player p,Player.Events events){updatePlayer();}
-                @Override public void onPlayerError(PlaybackException e){message("Не вдалося відтворити. Перевірте доступ до файлу або синхронізуйте джерело повторно.");}
+                @Override public void onPlayerError(PlaybackException e){message("Не вдалося відтворити. Перевірте мережу або доступ до файлу й натисніть відтворення, щоб повторити.");}
             });updatePlayer();}catch(Exception e){message("Не вдалося під’єднати плеєр");}
         },command->handler.post(command));
     }
@@ -250,7 +250,7 @@ public final class MainActivity extends Activity {
         if(same)player.seekTo(at,0);else{List<MediaItem> items=new ArrayList<>();for(Track track:tracks)items.add(PlaybackService.item(track));player.setMediaItems(items,at,0);}
         if(player.getPlaybackState()==Player.STATE_IDLE)player.prepare();player.play();
     }
-    private void toggle(){if(!ready())return;if(player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED)player.pause();else if(player.getMediaItemCount()>0){if(player.getPlaybackState()==Player.STATE_ENDED)player.seekToDefaultPosition();player.prepare();player.play();}else{openCategory("Композиції");}}
+    private void toggle(){if(!ready())return;if(player.getPlayerError()==null&&player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED)player.pause();else if(player.getMediaItemCount()>0){if(player.getPlaybackState()==Player.STATE_ENDED)player.seekToDefaultPosition();player.prepare();player.play();}else{openCategory("Композиції");}}
     private void trackMenu(Track track){trackMenu(track,-1);}
     private void trackMenu(Track track,int playlistPosition){
         if(actionSheet!=null)actionSheet.dismiss();actionSheet=new Dialog(this);actionSheet.requestWindowFeature(Window.FEATURE_NO_TITLE);Dialog sheet=actionSheet;
@@ -334,11 +334,18 @@ public final class MainActivity extends Activity {
         SourceDialog.show(this,existing,source->{app.sources.save(source);sync(source);});
     }
 
-    private void sync(Source source){if(syncing){message("Дочекайтеся поточної синхронізації");return;}syncing=true;render();app.sync.execute(()->{try{
-        List<Track> tracks=app.providers.synchronize(source,status->app.main.post(()->{if(!isDestroyed())subtitle.setText(status);}));app.library.merge(source.id,tracks,true);app.social.synchronize(source);app.artwork.retryFailures();
-        app.main.post(()->{syncing=false;message("Синхронізовано: "+Ui.tracks(tracks.size()));reload();});
-    }catch(Exception e){app.main.post(()->{syncing=false;message("Не вдалося синхронізувати. "+safeError(e));render();});}});}
+    private void sync(Source source){if(syncing){message("Дочекайтеся поточної синхронізації");return;}syncing=true;render();app.catalog.execute(()->{try{
+        List<Track> tracks=app.subsonic.synchronize(source,status->app.main.post(()->{if(!isDestroyed())subtitle.setText(status);}));app.library.merge(source.id,tracks,true);app.artwork.retryFailures();
+        app.sync.execute(()->{try{app.social.synchronize(source);app.main.post(()->{syncing=false;message("Синхронізовано: "+Ui.tracks(tracks.size()));reload();});}catch(Exception error){syncFailure(error);}});
+    }catch(Exception e){syncFailure(e);}});}
+    private void syncFailure(Exception error){app.main.post(()->{syncing=false;message("Не вдалося синхронізувати. "+safeError(error));reload();});}
     private String safeError(Exception e){
+        if(e instanceof app.selfonium.net.SubsonicClient.ApiException api)return switch(api.code){
+            case 40 -> "Сервер відхилив логін або пароль.";
+            case 50 -> "Обліковий запис не має дозволу на цю дію.";
+            case 70 -> "Запис більше не доступний на сервері.";
+            default -> "Сервер відхилив запит Subsonic (код "+api.code+").";
+        };
         if(e instanceof java.net.UnknownHostException)return "Не вдалося знайти сервер. Перевірте адресу та DNS у поточній мережі.";
         if(e instanceof javax.net.ssl.SSLException)return "Не вдалося перевірити HTTPS. Перевірте ім’я сервера, строк дії сертифіката та встановлення його CA на телефоні.";
         if(e instanceof java.net.SocketTimeoutException)return "Сервер не відповів вчасно. Перевірте мережу та порт.";
@@ -394,7 +401,7 @@ public final class MainActivity extends Activity {
     }
     private void updateTimes(long position,long duration){String elapsed=Protocol.time(position),remaining="−"+Protocol.time(Math.max(0,duration-position));if(!elapsed.contentEquals(playerTime.getText()))playerTime.setText(elapsed);if(!remaining.contentEquals(playerRemaining.getText()))playerRemaining.setText(remaining);}
     private void updatePlayer(){
-        if(player==null)return;MediaItem item=player.getCurrentMediaItem();boolean playing=player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED;boolean buffering=player.getPlaybackState()==Player.STATE_BUFFERING;if(miniProgress.isIndeterminate()!=buffering)miniProgress.setIndeterminate(buffering);miniPlay.icon(playing?"pause":"play");if(!android.text.TextUtils.equals(miniPlay.getContentDescription(),playing?"Пауза":"Відтворити"))miniPlay.setContentDescription(playing?"Пауза":"Відтворити");
+        if(player==null)return;MediaItem item=player.getCurrentMediaItem();boolean playing=player.getPlayerError()==null&&player.getPlayWhenReady()&&player.getPlaybackState()!=Player.STATE_ENDED;boolean buffering=player.getPlaybackState()==Player.STATE_BUFFERING;if(miniProgress.isIndeterminate()!=buffering)miniProgress.setIndeterminate(buffering);miniPlay.icon(playing?"pause":"play");if(!android.text.TextUtils.equals(miniPlay.getContentDescription(),playing?"Пауза":"Відтворити"))miniPlay.setContentDescription(playing?"Пауза":"Відтворити");
         playerCard.setVisibility(item==null?View.GONE:View.VISIBLE);if(item==null){miniTitle.setText("Оберіть композицію");miniArtist.setText("Відкрити бібліотеку");miniProgress.setProgress(0);handler.removeCallbacks(bindArtwork);pendingArtwork=null;miniCover.bind(null);miniId="";highlightPlaying(content,"");if(playerDialog!=null&&playerDialog.isShowing())playerDialog.dismiss();return;}
         Track current=app.library.get(item.mediaId);long duration=player.getDuration()>0?player.getDuration():current==null?0:current.durationMs,position=Math.max(0,player.getCurrentPosition());int percent=duration>0?(int)(position*1000/duration):0;miniProgress.setProgress(percent);
         if(!miniId.equals(item.mediaId)){miniId=item.mediaId;miniTitle.setText(Ui.name(item.mediaMetadata.title));miniArtist.setText(item.mediaMetadata.artist);queueArtwork(current);highlightPlaying(content,miniId);}

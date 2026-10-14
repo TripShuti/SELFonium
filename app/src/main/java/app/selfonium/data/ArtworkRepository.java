@@ -29,7 +29,7 @@ public final class ArtworkRepository {
     private static final long DISK_LIMIT = 96L * 1024 * 1024;
     private final Context context;
     private final Library library;
-    private final SubsonicClient providers;
+    private final SubsonicClient subsonic;
     private final File directory;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ThreadPoolExecutor workers = new ThreadPoolExecutor(3, 3, 30, TimeUnit.SECONDS,
@@ -48,8 +48,8 @@ public final class ArtworkRepository {
         public void cancel() { callback = null; }
         void deliver(Bitmap bitmap) { Consumer<Bitmap> target = callback; callback = null; if (target != null) target.accept(bitmap); }
     }
-    public ArtworkRepository(Context context, Library library, SubsonicClient providers) {
-        this.context = context.getApplicationContext(); this.library = library; this.providers = providers;
+    public ArtworkRepository(Context context, Library library, SubsonicClient subsonic) {
+        this.context = context.getApplicationContext(); this.library = library; this.subsonic = subsonic;
         directory = new File(context.getCacheDir(), "artwork-v1");
     }
     private String key(Track track) {
@@ -127,7 +127,7 @@ public final class ArtworkRepository {
             finally { try { retriever.release(); } catch (Exception ignored) {} }
         }
         if (bytes == null) {
-            SubsonicClient.Artwork artwork = providers.artwork(track);
+            SubsonicClient.Artwork artwork = subsonic.artwork(track);
             if (artwork == null) return null;
             if (!artwork.reference().equals(track.artwork)) library.artwork(track.id, artwork.reference());
             try (Http.Response response = Http.open("GET", artwork.stream().url(), artwork.stream().headers(), null);

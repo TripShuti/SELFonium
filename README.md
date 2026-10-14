@@ -51,7 +51,7 @@ SELFonium is a Subsonic/OpenSubsonic music client for Android, developed and tes
 
 **[Завантажити SELFonium 0.5.1 для Android](https://github.com/TripShuti/SELFonium/releases/download/v0.5.1/SELFonium-0.5.1.apk)** · [Усі релізи](https://github.com/TripShuti/SELFonium/releases)
 
-Готовий реліз — **0.5.1**. Синхронізація Subsonic і аудіокеш із гілки розробки **0.6.1** поки доступні в самостійній збірці.
+Готовий реліз — **0.5.1**. Синхронізація Subsonic і аудіокеш із гілки розробки **0.6.2** поки доступні в самостійній збірці.
 
 Завантаж `SELFonium-0.5.1.apk` на телефон, відкрий файл і дозволь встановлення з цього джерела, якщо Android попросить. Потрібен **Android 8.0 або новіший**.
 

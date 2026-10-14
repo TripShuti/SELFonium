@@ -31,6 +31,7 @@ import androidx.media3.session.MediaSession;
 import androidx.media3.session.MediaSessionService;
 import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Track;
+import app.selfonium.core.QueueRestore;
 import app.selfonium.net.SubsonicClient;
 import app.selfonium.ui.MainActivity;
 import java.io.File;
@@ -73,7 +74,7 @@ public final class PlaybackService extends MediaSessionService {
             String id=spec.uri.getLastPathSegment();Track track=app.library.get(id);if(track==null)throw new IOException("Композицію видалено з бібліотеки");
             String local=app.library.offline(id);
             if(!local.isEmpty()&&new File(local).isFile())return spec.withUri(Uri.fromFile(new File(local)));
-            try{SubsonicClient.Stream stream=app.providers.stream(track);return spec.withUri(Uri.parse(stream.url())).withRequestHeaders(stream.headers());}
+            try{SubsonicClient.Stream stream=app.subsonic.stream(track);return spec.withUri(Uri.parse(stream.url())).withRequestHeaders(stream.headers());}
             catch(Exception e){throw new IOException("Не вдалося відкрити аудіо. Перевірте джерело або синхронізуйте його повторно.",e);}
             }
         });
@@ -93,11 +94,13 @@ public final class PlaybackService extends MediaSessionService {
                 if(item!=null){app.io.execute(()->app.library.played(item.mediaId));handler.postDelayed(prefetch,350);}
                 saveQueue();
             }
+            @Override public void onPlayerError(androidx.media3.common.PlaybackException error){Log.w("SELFoniumPlayback","error="+error.getErrorCodeName()+" causes="+failureTypes(error));saveQueue();}
             @Override public void onPlaybackStateChanged(int state){
                 applyEqualizer();
                 if(state==Player.STATE_READY)Log.i("SELFoniumPlayback","ready transition="+transition+" elapsedMs="+(android.os.SystemClock.elapsedRealtime()-transitionAt));
             }
-            @Override public void onPlayWhenReadyChanged(boolean ready,int reason){Log.i("SELFoniumPlayback","playWhenReady="+ready+" reason="+reason);}
+            @Override public void onPlayWhenReadyChanged(boolean ready,int reason){Log.i("SELFoniumPlayback","playWhenReady="+ready+" reason="+reason);saveQueue();}
+            @Override public void onPositionDiscontinuity(Player.PositionInfo oldPosition,Player.PositionInfo newPosition,int reason){saveQueue();}
             @Override public void onPlaybackSuppressionReasonChanged(int reason){Log.i("SELFoniumPlayback","suppression="+reason);}
             @Override public void onIsPlayingChanged(boolean playing){Log.i("SELFoniumPlayback","playing="+playing);if(playing){handler.removeCallbacks(prefetch);handler.postDelayed(prefetch,350);}}
         });
@@ -105,13 +108,21 @@ public final class PlaybackService extends MediaSessionService {
             @Override public void onAudioUnderrun(EventTime eventTime,int bufferSize,long bufferSizeMs,long elapsedSinceLastFeedMs){Log.w("SELFoniumPlayback","audio-underrun elapsedSinceFeedMs="+elapsedSinceLastFeedMs);}
         });handler.postDelayed(tick,5000);
     }
+    private static String failureTypes(Throwable error){
+        StringBuilder types=new StringBuilder();int depth=0;
+        for(Throwable cause=error.getCause();cause!=null&&depth++<6;cause=cause.getCause()){
+            if(types.length()>0)types.append('/');types.append(cause.getClass().getSimpleName());
+            if(cause instanceof app.selfonium.net.Http.StatusException status)types.append('(').append(status.status).append(')');
+        }
+        return types.toString();
+    }
     private void applySettings(){if(player==null)return;player.setPlaybackSpeed(prefs.getFloat("speed",1));player.setShuffleModeEnabled(prefs.getBoolean("shuffle",false));player.setRepeatMode(prefs.getInt("repeat",Player.REPEAT_MODE_OFF));applyEqualizer();}
     private void applyEqualizer(){equalizer.settings(EqualizerSettings.read(prefs));}
     private void saveTimeline(){
         if(player==null)return;
         java.util.List<String> ids=new java.util.ArrayList<>();for(int i=0;i<player.getMediaItemCount();i++)ids.add(player.getMediaItemAt(i).mediaId);
-        app.io.execute(()->{JSONArray json=new JSONArray();for(String id:ids)json.put(id);prefs.edit().putString("queue",json.toString()).apply();});
-        saveQueue();
+        int index=Math.max(0,player.getCurrentMediaItemIndex());long position=Math.max(0,player.getCurrentPosition());
+        app.io.execute(()->{JSONArray json=new JSONArray();for(String id:ids)json.put(id);prefs.edit().putString("queue",json.toString()).putInt("queueIndex",index).putLong("position",position).apply();});
     }
     private void saveQueue(){
         if(player==null)return;
@@ -121,10 +132,11 @@ public final class PlaybackService extends MediaSessionService {
     private void restoreQueue(){
         String saved=prefs.getString("queue","[]");int previous=prefs.getInt("queueIndex",0);long position=prefs.getLong("position",0);
         app.io.execute(()->{try{
-            JSONArray ids=new JSONArray(saved);java.util.List<MediaItem> items=new java.util.ArrayList<>();int index=0;
-            for(int i=0;i<ids.length();i++){Track track=app.library.get(ids.getString(i));if(track!=null){if(i<previous)index++;items.add(item(track));}}
-            int restored=Math.min(index,Math.max(0,items.size()-1));
-            handler.post(()->{if(player!=null&&playlistGeneration==0&&!items.isEmpty())player.setMediaItems(items,restored,position);});
+            JSONArray ids=new JSONArray(saved);java.util.List<String> original=new java.util.ArrayList<>();
+            for(int i=0;i<ids.length();i++)original.add(ids.getString(i));
+            var restored=QueueRestore.resolve(original,previous,position,id->app.library.get(id)!=null);
+            java.util.List<MediaItem> items=new java.util.ArrayList<>();for(String id:restored.ids())items.add(item(app.library.get(id)));
+            handler.post(()->{if(player!=null&&playlistGeneration==0&&!items.isEmpty())player.setMediaItems(items,restored.index(),restored.position());});
         }catch(Exception ignored){}});
     }
     @Override public MediaSession onGetSession(MediaSession.ControllerInfo controllerInfo){return controllerInfo.getUid()==android.os.Process.myUid()||controllerInfo.isTrusted()?session:null;}

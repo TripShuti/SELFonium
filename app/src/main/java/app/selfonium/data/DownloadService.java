@@ -45,7 +45,7 @@ public final class DownloadService extends Service {
         SelfoniumApp app=(SelfoniumApp)getApplication();Track track=app.library.get(id);if(track==null)throw new IllegalArgumentException();
         File folder=new File(getFilesDir(),"offline");if(!folder.isDirectory()&&!folder.mkdirs())throw new java.io.IOException();
         String key=Protocol.hex(java.security.MessageDigest.getInstance("SHA-256").digest(id.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
-        File partial=new File(folder,key+".part"),dest=new File(folder,key+".audio");SubsonicClient.Stream stream=app.providers.stream(track);
+        File partial=new File(folder,key+".part"),dest=new File(folder,key+".audio");SubsonicClient.Stream stream=app.subsonic.stream(track);
         try{
             if(stream.url().startsWith("content:")||stream.url().startsWith("file:")){
                 try(InputStream in=getContentResolver().openInputStream(android.net.Uri.parse(stream.url()));FileOutputStream out=new FileOutputStream(partial)){copy(in,out,-1,track.title);}

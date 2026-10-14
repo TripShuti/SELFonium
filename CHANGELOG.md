@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add in-app stable GitHub release checks with daily foreground scheduling, an opt-out, persisted check times and one reminder per version.
+- Add a themed Updates screen, literal release notes, cancellable private-cache APK downloads and progress reporting.
+- Verify APK size/hash, package/version/SDK and installed signing identity before read-only FileProvider handoff to Android’s user-confirmed installer.
+- Reuse the existing release JSON schema and add offline updater HTTP/security fixtures. No release signing key or release pipeline architecture is changed.
+
 ## 0.6.3
 
 - Fix a fixture-only concurrency counter race exposed by GitHub runners; retain the three-request limit and 3000-album ordering checks.

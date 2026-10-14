@@ -12,6 +12,7 @@ Development and device testing focus on **Navidrome**. Other compatible Subsonic
 - Manage the playback queue, shuffle, repeat, playback speed and sleep timer.
 - Adjust a ten-band graphic equalizer with preamp, built-in presets and saved custom settings.
 - Customize the accent color, AMOLED background and album-grid density.
+- Check stable GitHub Releases in settings, download verified updates and open Android’s installer.
 
 Server playlist editing requires a connection. OpenSubsonic extension discovery is implemented; features such as synchronized lyrics, scrobbling and API-key authentication are not. See [features and limitations](docs/FEATURES.md).
 
@@ -29,7 +30,7 @@ Download the APK from [GitHub Releases](https://github.com/TripShuti/SELFonium/r
 
 Requirements: **Android 8.0 or later (API 26)**. Remote playback needs a compatible server account and network access; downloaded and local files can play offline. Grant audio-library and notification permissions when needed.
 
-Install updates over the existing app to retain data. Official updates must use the same signing identity. Local and CI debug builds can have a different signature and are intended for development.
+The development branch includes an [in-app updater](docs/UPDATES.md); the published 0.6.3 APK does not contain it yet. Install updates over the existing app to retain data. Official updates must use the same signing identity. Local and CI debug builds can have a different signature and are intended for development.
 
 To connect a server, open settings using the gear icon, find the music sources section and add a Subsonic server with its base URL, username and password. Do not append `/rest` to the URL. Sync the source, then select a track from the library.
 

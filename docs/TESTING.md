@@ -19,7 +19,7 @@ Java syntax parsing does not resolve Android types. SQLite tests execute extract
 
 `bash scripts/build.sh` runs core checks, real debug assembly, Android Lint and HTTP fixtures. CI additionally runs release/security tooling tests and workflow validation, without release secrets.
 
-`bash scripts/build-release.sh` runs release-tooling/core/HTTP checks, real release assembly/lint, signing and APK verification. Unsigned CI builds run the same build checks without loading a key; a separate protected job signs the verified artifact without invoking Gradle.
+`python3 scripts/release.py build` runs release-tooling/core/HTTP checks, real release assembly/lint, signing and APK verification. Unsigned CI builds run the same build checks without loading a key; a separate protected job signs the verified artifact without invoking Gradle.
 
 Lint reports are under `app/build/reports`. Existing builds have warnings; a successful lint task is not a claim of zero warnings.
 

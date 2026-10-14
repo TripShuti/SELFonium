@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Remove the cache-specific Android checker, custom SDK bootstrap and redundant release wrapper; use SDK tools, Gradle and the release CLI directly.
+
 - Add CI for main pushes and pull requests with Gradle caching, host tests, Android build/lint checks and debug artifacts.
 - Prepare a gated tag-release pipeline with reviewed-main validation, increasing versionCode, isolated signing, verified APK assets and draft publication. Automatic publication remains disabled by default.
 - Rewrite repository documentation in English and document the current Subsonic/OpenSubsonic scope and limitations.

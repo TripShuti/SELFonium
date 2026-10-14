@@ -288,7 +288,7 @@ def backup(signing, destination):
         'The password is deliberately not included in this backup directory.\n'
         'Restore the .p12 and password file outside the Git repository with mode 600.\n'
         'Configure keystore, password_file and alias in the local signing.json.\n'
-        'Run bash scripts/build-release.sh and verify the signer before publishing.\n'
+        'Run python3 scripts/release.py build and verify the signer before publishing.\n'
         'A copy on the same disk does not protect against disk loss.\n')
     print(f'Encrypted backup: {destination}\nVerified certificate: {SIGNER_SHA256}\nPassword is NOT included; keep it separately.')
 

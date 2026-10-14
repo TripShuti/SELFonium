@@ -24,8 +24,10 @@ public final class SelfoniumApp extends Application {
     public final ExecutorService sync = Executors.newSingleThreadExecutor();
     public final ExecutorService io = Executors.newSingleThreadExecutor();
     public final Handler main = new Handler(Looper.getMainLooper());
+    @Override protected void attachBaseContext(android.content.Context base){super.attachBaseContext(app.selfonium.locale.AppLanguage.wrap(base));}
     @Override public void onCreate() {
         super.onCreate();
+        app.selfonium.locale.AppLanguage.initialize(this);
         library = new Library(this); sources = new SourceStore(this); subsonic = new SubsonicClient(sources,message->{
             if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0)android.util.Log.d("SELFoniumSubsonic",message);
         });

@@ -2,7 +2,7 @@
 
 SELFonium is an open-source Android music player for Subsonic/OpenSubsonic servers and local audio. All implemented features are available without subscriptions or paid unlocks.
 
-Development and device testing focus on **Navidrome**. Other compatible Subsonic servers are supported on a best-effort basis, without a guarantee of full compatibility. The app interface is currently in Ukrainian; this repository's documentation is in English.
+Development and device testing focus on **Navidrome**. Other compatible Subsonic servers are supported on a best-effort basis, without a guarantee of full compatibility. The latest published release uses Ukrainian. Development builds also include English, Polish, German, French and Spanish, with a language selector in settings.
 
 ## Features
 

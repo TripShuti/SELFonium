@@ -24,7 +24,7 @@ Offline downloads save whole files before marking them available. There is no do
 
 ## Interface and audio
 
-The UI is currently Ukrainian. Appearance settings provide accent colors, a custom HEX accent, an AMOLED background and two/three-column cover grids. Portrait and landscape players use adaptive layouts.
+Development builds include English, Ukrainian, Polish, German, French and Spanish. The app follows the device language by default (English fallback); Settings → Language selects an override. Android 13 and later also expose these languages in system app settings. These changes are not yet in a published release. Appearance settings provide accent colors, a custom HEX accent, an AMOLED background and two/three-column cover grids. Portrait and landscape players use adaptive layouts.
 
 The [graphic equalizer](EQUALIZER.md) has ten fixed bands, preamp, 18 built-in presets, saved presets and automatic headroom. It processes this app's PCM16 output. PEQ, AutoEQ import, system-wide equalization, encoded passthrough, audio offload and bit-perfect output are not available.
 

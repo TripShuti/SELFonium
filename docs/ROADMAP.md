@@ -13,11 +13,13 @@
 
 - In-app GitHub updater implemented with host fixtures; Android permission, installer and lifecycle checks remain pending. See [UPDATES.md](UPDATES.md).
 
+- Six UI languages, automatic language selection and an in-app language picker. Resource parity, placeholders and selection have host coverage; device layout and language-switch checks remain pending.
+
 ## Next
 
 - Exercise more lifecycle, audio-focus, Bluetooth and network interruption cases, including the minimum supported Android version.
 - Continue Navidrome device testing and expand protocol fixtures for optional capabilities and server errors.
-- Audit TalkBack accessibility, move UI strings into localization resources and test more screen sizes.
+- Audit TalkBack accessibility, proofread translations and test more screen sizes.
 - Review branch/tag protections and verify the first protected GitHub release run.
 - Move the encrypted signing backup off the development disk and store its password separately when another destination is available.
 

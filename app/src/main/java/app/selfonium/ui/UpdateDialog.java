@@ -25,7 +25,7 @@ final class UpdateDialog {
     private LinearLayout available;private ProgressBar progress;private boolean awaitingPermission,foreground=true;private ReleaseInfo shown;
     private UpdateDialog(Activity activity,UpdateManager manager){this.activity=activity;this.manager=manager;dialog=Ui.screen(activity);}
     private String text(int id,Object...args){return activity.getString(id,args);}
-    private String date(long when){return DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT).format(new Date(when));}
+    private String date(long when){return DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT,app.selfonium.locale.AppLanguage.locale(activity)).format(new Date(when));}
     private void open(){
         ScrollView scroll=new ScrollView(activity);Ui.insets(scroll);LinearLayout page=Ui.column(activity);Ui.pad(page,16,8);scroll.addView(page);
         LinearLayout top=Ui.row(activity);top.addView(new IconButton(activity,"back",text(R.string.updates_close),dialog::dismiss));top.addView(Ui.title(activity,text(R.string.updates_title),20));page.addView(top);Ui.space(page,16);

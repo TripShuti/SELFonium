@@ -1,6 +1,6 @@
 # In-app updates
 
-The updater is available under **Settings → Updates** (currently displayed in Ukrainian). It checks stable GitHub Releases, downloads the selected APK inside SELFonium and hands a verified file to Android's system installer. It does not use an app store, Google Play Services, analytics or a third-party update SDK.
+The updater is available under **Settings → Updates**. It checks stable GitHub Releases, downloads the selected APK inside SELFonium and hands a verified file to Android's system installer. It does not use an app store, Google Play Services, analytics or a third-party update SDK.
 
 ## Checks and delivery
 

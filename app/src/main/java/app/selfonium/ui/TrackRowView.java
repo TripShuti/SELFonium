@@ -1,5 +1,8 @@
 package app.selfonium.ui;
 
+import app.selfonium.locale.Texts;
+import app.selfonium.R;
+
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.drawable.RippleDrawable;
@@ -56,7 +59,7 @@ final class TrackRowView extends LinearLayout {
         duration.setSingleLine(true);
         duration.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         addView(duration, new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT));
-        overflow = new IconButton(context, "more", "Дії з композицією", this::openMenu);
+        overflow = new IconButton(context, "more", Texts.get(getContext(),R.string.ui_track_actions), this::openMenu);
         // A real child target receives its own touch stream and never invokes playback.
         addView(overflow, new LayoutParams(Ui.dp(context, 48), Ui.dp(context, 48)));
     }
@@ -67,15 +70,15 @@ final class TrackRowView extends LinearLayout {
         playAction = play;
         menuAction = menu;
         cover.bind(value);
-        title.setText(Ui.name(value.title));
-        artist.setText(value.artist + " · " + Ui.album(value.album));
+        title.setText(Texts.metadata(getContext(),Ui.name(value.title)));
+        artist.setText(Texts.metadata(getContext(),value.artist) + " · " + Ui.album(getContext(),value.album));
         albumPosition(0);
         duration.setText(value.durationMs > 0 ? Protocol.time(value.durationMs) : "");
         setContentDescription(value.title + ", " + value.artist);
-        overflow.setContentDescription("Дії з композицією «" + value.title + "»");
+        overflow.setContentDescription(Texts.get(getContext(),R.string.track_actions_named,value.title));
     }
 
-    void albumPosition(int position){number.setText(Integer.toString(position));number.setVisibility(position>0?VISIBLE:GONE);cover.setVisibility(position>0?GONE:VISIBLE);if(position>0&&track!=null)artist.setText(track.artist);}
+    void albumPosition(int position){number.setText(Integer.toString(position));number.setVisibility(position>0?VISIBLE:GONE);cover.setVisibility(position>0?GONE:VISIBLE);if(position>0&&track!=null)artist.setText(Texts.metadata(getContext(),track.artist));}
     void nowPlaying(boolean playing) { setActivated(playing); title.setTextColor(playing ? Ui.ACCENT : Ui.TEXT);number.setTextColor(playing?Ui.ACCENT:Ui.MUTED); }
 
     private void openMenu() {

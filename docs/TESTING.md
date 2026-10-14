@@ -47,3 +47,11 @@ For the distribution automation update, local policy, workflow and host-side che
 Local checks for the automation/documentation update passed: 17 release-policy tests, four CI-signing tests, 39 core checks, 69 DSP checks, SQLite migration/outbox checks, 119 social API checks and 61 catalog checks. Actionlint validated both workflows; local Markdown paths/images/anchors and 16 external documentation URLs were checked. The existing 0.6.2 asset and encrypted backup were verified against the pinned certificate. These results do not establish that GitHub-hosted signing or publication has run successfully.
 
 Updater-specific fixtures and the required Android permission/install/lifecycle checks are described in [UPDATES.md](UPDATES.md#validation). Host fixtures are not evidence of successful Android APK verification or installation.
+
+## Localization
+
+Run `bash scripts/test-core.sh` for language selection and resource checks, including all six language sets, format placeholders, plural categories and stable preset/navigation keys. The checks are offline and are also part of the existing CI build. They do not build an APK or emulate Android resource selection.
+
+On Android 8–12 and Android 13+, check the device-language default, unsupported-language English fallback, explicit overrides and returning to the system language. On Android 13+, also change the language in system app settings. Restart the app and confirm the choice persists. Switch languages during playback; verify music continues, sources and favorites remain intact, and custom playlist/preset names stay unchanged. Check navigation, player, source forms, update dates, notification labels and equalizer dialogs at large font sizes in each language. Review 0/1/2/5/11/21 item counts, truncated labels and accent colors. These device checks have not yet been performed for this change.
+
+`app.selfonium.locale.LocalizationTest` adds instrumentation checks for Android resource selection, Ukrainian/Polish quantity rules, formatting and literal templates. It does not modify language preferences or playback. These instrumentation tests have been added but have not been compiled or executed as part of the localization work.

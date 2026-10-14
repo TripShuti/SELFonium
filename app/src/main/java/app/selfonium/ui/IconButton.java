@@ -1,5 +1,8 @@
 package app.selfonium.ui;
 
+import app.selfonium.locale.Texts;
+import app.selfonium.R;
+
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.graphics.*;
@@ -11,7 +14,7 @@ final class IconButton extends View {
     private final Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path=new Path();
     private String icon;private int color=Ui.TEXT;private boolean filled;
-    public IconButton(Context context){this(context,"play","Відтворити",()->{});}
+    public IconButton(Context context){this(context,"play",Texts.get(context,R.string.ui_play),()->{});}
     IconButton(Context context,String icon,String description,Runnable action){
         super(context);this.icon=icon;setContentDescription(description);setFocusable(true);
         setBackground(new RippleDrawable(ColorStateList.valueOf((Ui.ACCENT&0xFFFFFF)|0x33000000),null,Ui.shape(context,0xFFFFFFFF,30)));

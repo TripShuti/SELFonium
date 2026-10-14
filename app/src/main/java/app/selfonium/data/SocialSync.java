@@ -1,5 +1,8 @@
 package app.selfonium.data;
 
+import app.selfonium.locale.Texts;
+import app.selfonium.R;
+
 import app.selfonium.core.Source;
 import app.selfonium.core.Track;
 import app.selfonium.core.ServerPlaylist;
@@ -26,7 +29,7 @@ public final class SocialSync {
         Library.Preview preview=app.library.previewFavorite(track.id,!app.library.favorite(track.id));
         app.io.execute(()->{
             try{Source source=java.util.List.of("device","files","radio").contains(track.sourceId)?null:app.sources.get(track.sourceId);app.library.saveFavorite(track.id,preview,source!=null&&source.type==Source.Type.SUBSONIC);pendingCount=app.library.pendingFavorites().size();changed("");requestFlush();}
-            catch(Exception error){app.library.discardFavorite(track.id,preview);changed("Не вдалося зберегти улюблене на телефоні.");}
+            catch(Exception error){app.library.discardFavorite(track.id,preview);changed(Texts.get(app,R.string.ui_could_not_save_favorites_on_this_phone));}
         });
     }
     public void requestFlush(){
@@ -35,7 +38,7 @@ public final class SocialSync {
             try{
                 for(int pass=0;pass<3&&!app.library.pendingFavorites().isEmpty();pass++)flushFavorites(null);
                 failureReported=false;changed("");
-            }catch(Exception error){if(!failureReported){failureReported=true;changed("Зміни улюбленого збережено на телефоні. Надсилання на сервер буде повторено після відновлення зв’язку.");}}
+            }catch(Exception error){if(!failureReported){failureReported=true;changed(Texts.get(app,R.string.ui_favorite_changes_are_saved_on_this_phone));}}
             finally{pendingCount=app.library.pendingFavorites().size();flushQueued.set(false);if(pendingCount>0)app.main.postDelayed(retry,30_000);}
         });
     }
@@ -70,15 +73,15 @@ public final class SocialSync {
         pendingCount=app.library.pendingFavorites().size();changed("");
     }
     private Source server(Library.Playlist playlist) throws Exception {
-        if(playlist==null||!playlist.remote()||!playlist.writable())throw new java.io.IOException("Плейлист доступний лише для читання");
-        Source source=app.sources.get(playlist.source());if(source==null)throw new java.io.IOException("Джерело видалено");return source;
+        if(playlist==null||!playlist.remote()||!playlist.writable())throw new java.io.IOException(Texts.get(app,R.string.ui_this_playlist_is_read_only));
+        Source source=app.sources.get(playlist.source());if(source==null)throw new java.io.IOException(Texts.get(app,R.string.ui_source_removed));return source;
     }
     public void create(Source source,String name,Track initial) throws Exception {
-        if(initial!=null&&!initial.sourceId.equals(source.id))throw new java.io.IOException("Композиція належить іншому джерелу");
+        if(initial!=null&&!initial.sourceId.equals(source.id))throw new java.io.IOException(Texts.get(app,R.string.ui_the_track_belongs_to_another_source));
         ServerPlaylist playlist=app.subsonic.createPlaylist(source,name,initial);app.library.importPlaylist(source.id,source.username,playlist);
     }
     public void add(Library.Playlist playlist,Track track) throws Exception {
-        Source source=server(playlist);if(!source.id.equals(track.sourceId))throw new java.io.IOException("Композиція належить іншому джерелу");
+        Source source=server(playlist);if(!source.id.equals(track.sourceId))throw new java.io.IOException(Texts.get(app,R.string.ui_the_track_belongs_to_another_source));
         app.library.importPlaylist(source.id,source.username,app.subsonic.addToPlaylist(source,playlist.remoteId(),track));
     }
     public void rename(Library.Playlist playlist,String name) throws Exception {Source source=server(playlist);app.library.importPlaylist(source.id,source.username,app.subsonic.renamePlaylist(source,playlist.remoteId(),name));}

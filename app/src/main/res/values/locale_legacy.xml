@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Stable legacy navigation/error tokens; never use localized labels as data keys. -->
+    <string-array name="legacy_text_keys" translatable="false">
+        <item>"Некоректна адреса сервера"</item>
+        <item>"Вкажіть http(s)://сервер[:порт][/шлях] без пароля в адресі"</item>
+        <item>"Без назви"</item>
+        <item>"Невідомий виконавець"</item>
+        <item>"Без альбому"</item>
+        <item>"Рівний"</item>
+        <item>"Не вдалося зберегти улюблене на телефоні."</item>
+        <item>"Зміни улюбленого збережено на телефоні. Надсилання на сервер буде повторено після відновлення зв’язку."</item>
+        <item>"Плейлист доступний лише для читання"</item>
+        <item>"Джерело видалено"</item>
+        <item>"Композиція належить іншому джерелу"</item>
+        <item>"Офлайн-музика"</item>
+        <item>"SELFonium · Офлайн"</item>
+        <item>"Скасувати"</item>
+        <item>"Завантаження…"</item>
+        <item>"Збережено для офлайн-прослуховування"</item>
+        <item>"Завантаження скасовано"</item>
+        <item>"Не вдалося завантажити. Перевірте джерело та вільне місце."</item>
+        <item>" МБ"</item>
+        <item>"Медіатека недоступна"</item>
+        <item>"Аудіофайл"</item>
+        <item>"Введіть назву"</item>
+        <item>"Не вдалося відкрити сховище джерел. Дані не перезаписано."</item>
+        <item>"Не вдалося зберегти джерела"</item>
+        <item>"Сервер повторює сторінки альбомів"</item>
+        <item>"Не вдалося прочитати альбом"</item>
+        <item>" композицій"</item>
+        <item>"Сервер створив плейлист, але не повернув його ID. Оновіть джерело, перш ніж повторювати створення."</item>
+        <item>"Плейлист змінився на сервері. Оновіть його перед видаленням композиції."</item>
+        <item>"Джерело недоступне: підтримується лише Subsonic / OpenSubsonic"</item>
+        <item>"Операцію скасовано"</item>
+        <item>"Сервер повернув перенаправлення без адреси"</item>
+        <item>"Сервер перенаправляє на інший хост. Вкажіть кінцеву адресу джерела."</item>
+        <item>"Перевірте кінцеву адресу API сервера"</item>
+        <item>"Забагато перенаправлень"</item>
+        <item>"Відповідь перевищує 32 МБ"</item>
+        <item>"Композицію видалено з бібліотеки"</item>
+        <item>"Не вдалося відкрити аудіо. Перевірте джерело або синхронізуйте його повторно."</item>
+        <item>"Сервер повернув некоректний діапазон аудіо"</item>
+        <item>"Аудіопотік обірвався"</item>
+        <item>"Дії з композицією"</item>
+        <item>"Дії з композицією «"</item>
+        <item>"Закрити вигляд"</item>
+        <item>"Вигляд"</item>
+        <item>"Акцентний колір"</item>
+        <item>"Бузковий"</item>
+        <item>"Блакитний"</item>
+        <item>"М’ятний"</item>
+        <item>"Зелений"</item>
+        <item>"Золотий"</item>
+        <item>"Персиковий"</item>
+        <item>"Рожевий"</item>
+        <item>"Срібний"</item>
+        <item>"Акцент: "</item>
+        <item>"Власний акцентний колір"</item>
+        <item>"Приклад активної кнопки"</item>
+        <item>"Фон"</item>
+        <item>"Чорний фон AMOLED"</item>
+        <item>"Колонки обкладинок"</item>
+        <item>" колонки"</item>
+        <item>"Застосувати"</item>
+        <item>"Відновити стандартний вигляд"</item>
+        <item>"Власний колір · #%06X"</item>
+        <item>"Колір #RRGGBB"</item>
+        <item>"Обрати"</item>
+        <item>"Наприклад, #A7C7FF"</item>
+        <item>"Оберіть світліший колір для читабельного тексту"</item>
+        <item>"Закрити еквалайзер"</item>
+        <item>"Еквалайзер"</item>
+        <item>"Скинути еквалайзер"</item>
+        <item>"Пресети"</item>
+        <item>"Зберегти власний пресет"</item>
+        <item>"Частотна характеристика еквалайзера"</item>
+        <item>"Попереднє підсилення"</item>
+        <item>" Гц, підсилення"</item>
+        <item>"Автозапас рівня"</item>
+        <item>"Ефект застосовується лише до музики SELFonium. Натисніть значення над смугою, щоб ввести точне підсилення."</item>
+        <item>" Гц: "</item>
+        <item>"Власний"</item>
+        <item>"Пресет · "</item>
+        <item>"Компенсація: −%.1f dB · зменшує ризик перевантаження"</item>
+        <item>"Рівень регулюється вручну через Preamp."</item>
+        <item>"Видалити власний пресет…"</item>
+        <item>"Пресети еквалайзера"</item>
+        <item>"Видалити власний пресет"</item>
+        <item>"Видалити «"</item>
+        <item>"Видалити"</item>
+        <item>"Назва пресета"</item>
+        <item>"Зберегти пресет"</item>
+        <item>"Зберегти"</item>
+        <item>"Замінити пресет «"</item>
+        <item>"Замінити"</item>
+        <item>" Гц"</item>
+        <item>"Вкажіть число від −12 до +12"</item>
+        <item>"Композиції"</item>
+        <item>"Альбоми"</item>
+        <item>"Улюблене"</item>
+        <item>"Не вдалося відтворити. Перевірте мережу або доступ до файлу й натисніть відтворення, щоб повторити."</item>
+        <item>"Не вдалося під’єднати плеєр"</item>
+        <item>"Назад"</item>
+        <item>"Фільтр джерел"</item>
+        <item>"Меню"</item>
+        <item>"Оберіть композицію"</item>
+        <item>"Відкрити бібліотеку"</item>
+        <item>"Відтворити"</item>
+        <item>"Головна"</item>
+        <item>"Бібліотека"</item>
+        <item>"Пошук"</item>
+        <item>"Налаштування"</item>
+        <item>"Черга відтворення"</item>
+        <item>"Джерела музики"</item>
+        <item>"Усі джерела"</item>
+        <item>"На пристрої"</item>
+        <item>"Імпортовані файли"</item>
+        <item>"Радіо"</item>
+        <item>"Джерела бібліотеки"</item>
+        <item>"Синхронізація…"</item>
+        <item>"Ваша музика"</item>
+        <item>"Під’єднайте медіасервер або додайте файли з пристрою."</item>
+        <item>"Додати джерело"</item>
+        <item>"Мікс треків"</item>
+        <item>"Мікс альбомів"</item>
+        <item>"Черга"</item>
+        <item>"Улюблені композиції"</item>
+        <item>"Нещодавно відтворені"</item>
+        <item>"Переглянути: "</item>
+        <item>"Плейлисти"</item>
+        <item>"Виконавці"</item>
+        <item>"Офлайн"</item>
+        <item>"Файли"</item>
+        <item>"Розділи бібліотеки"</item>
+        <item>"Шукати"</item>
+        <item>"Композиції, альбоми, виконавці"</item>
+        <item>"Очистити пошук"</item>
+        <item>"Змінити кількість колонок"</item>
+        <item>"Ще ▾"</item>
+        <item>"Ще: розділи бібліотеки"</item>
+        <item>"Сортування"</item>
+        <item>"За назвою"</item>
+        <item>"За виконавцем"</item>
+        <item>"За альбомом"</item>
+        <item>"За тривалістю"</item>
+        <item>"Пошук у вашій музиці"</item>
+        <item>"Знайдіть свою музику"</item>
+        <item>"Введіть назву композиції, альбому або виконавця."</item>
+        <item>"Нічого не знайдено"</item>
+        <item>"Тут поки порожньо"</item>
+        <item>"Спробуйте інший запит або змініть джерело."</item>
+        <item>"Додайте музику або змініть фільтр джерел."</item>
+        <item>"альбом"</item>
+        <item>"альбоми"</item>
+        <item>"альбомів"</item>
+        <item>"виконавець"</item>
+        <item>"виконавці"</item>
+        <item>"виконавців"</item>
+        <item>"Поки немає композицій"</item>
+        <item>"Додайте джерело або змініть фільтр."</item>
+        <item>"Альбом"</item>
+        <item>"Виконавець"</item>
+        <item>"Перемішати"</item>
+        <item>"Плеєр під’єднується…"</item>
+        <item>"Відтворити наступною"</item>
+        <item>"Додати в чергу"</item>
+        <item>"Прибрати з улюбленого"</item>
+        <item>"Додати в улюблене"</item>
+        <item>"Прибрати з цього плейлиста"</item>
+        <item>"Додати до плейлиста"</item>
+        <item>"Видалити офлайн-копію"</item>
+        <item>"Завантажити офлайн"</item>
+        <item>"Видалити завантажену копію? Оригінал залишиться у джерелі."</item>
+        <item>"Перейти до альбому"</item>
+        <item>"Інформація"</item>
+        <item>"\nТривалість: "</item>
+        <item>"\nДжерело: "</item>
+        <item>"Готово"</item>
+        <item>"Видалене джерело"</item>
+        <item>"Джерело"</item>
+        <item>"Радіопотік не має кінця й не завантажується як файл"</item>
+        <item>"Додано до завантажень"</item>
+        <item>"Створити плейлист"</item>
+        <item>"На телефоні або на сервері Subsonic"</item>
+        <item>"Ваші добірки"</item>
+        <item>"Оновіть Subsonic-джерело, щоб отримати плейлисти із сервера, або створіть власний."</item>
+        <item>"На телефоні"</item>
+        <item>" · лише читання"</item>
+        <item>"Меню плейлиста"</item>
+        <item>"Відкрити"</item>
+        <item>"Перейменувати"</item>
+        <item>"Назва плейлиста"</item>
+        <item>"Перейменувати плейлист"</item>
+        <item>"Плейлист буде видалено і на сервері. Аудіофайли залишаться."</item>
+        <item>"Аудіофайли залишаться в бібліотеці."</item>
+        <item>"Оновлення плейлиста…"</item>
+        <item>"Плейлист оновлено"</item>
+        <item>"Не вдалося оновити плейлист. "</item>
+        <item>" Оновіть джерело перед повторенням дії."</item>
+        <item>"Новий плейлист"</item>
+        <item>"Створити"</item>
+        <item>"＋ Новий плейлист"</item>
+        <item>"Очікують синхронізації"</item>
+        <item>"Улюблене: "</item>
+        <item>" змін · натисніть, щоб повторити"</item>
+        <item>"Медіасервери"</item>
+        <item>"Синхронізувати "</item>
+        <item>"Меню джерела"</item>
+        <item>"Додати Subsonic-сервер"</item>
+        <item>"Subsonic / OpenSubsonic · перевірено з Navidrome"</item>
+        <item>"Сканувати музику"</item>
+        <item>"Аудіофайли з медіатеки Android"</item>
+        <item>"Додати файли"</item>
+        <item>"Вибрати через файловий менеджер"</item>
+        <item>"Додати радіостанцію"</item>
+        <item>"Пряме посилання на аудіопотік"</item>
+        <item>"Композиції джерела"</item>
+        <item>"Редагувати"</item>
+        <item>"Видалити джерело"</item>
+        <item>"Видалити джерело, його записи та офлайн-копії?"</item>
+        <item>"Дочекайтеся поточної синхронізації"</item>
+        <item>"Синхронізовано: "</item>
+        <item>"Не вдалося синхронізувати. "</item>
+        <item>"Сервер відхилив логін або пароль."</item>
+        <item>"Обліковий запис не має дозволу на цю дію."</item>
+        <item>"Запис більше не доступний на сервері."</item>
+        <item>"Сервер відхилив запит Subsonic (код "</item>
+        <item>"Не вдалося знайти сервер. Перевірте адресу та DNS у поточній мережі."</item>
+        <item>"Не вдалося перевірити HTTPS. Перевірте ім’я сервера, строк дії сертифіката та встановлення його CA на телефоні."</item>
+        <item>"Сервер не відповів вчасно. Перевірте мережу та порт."</item>
+        <item>"Не вдалося з’єднатися із сервером. Перевірте адресу, порт та доступність сервера."</item>
+        <item>"Сервер відхилив авторизацію. Перевірте логін і пароль або повторно збережіть джерело."</item>
+        <item>"Сервер заборонив доступ. Перевірте права користувача на музичну бібліотеку."</item>
+        <item>"Сервер відхилив запит (HTTP 400). Перевірте тип джерела та сумісність API."</item>
+        <item>"API не знайдено (HTTP 404). Перевірте адресу Subsonic-сервера без /rest."</item>
+        <item>"Сервер повернув HTTP "</item>
+        <item>". Перевірте його стан і налаштування."</item>
+        <item>"Перевірте адресу, мережу й облікові дані."</item>
+        <item>"Перевірте налаштування та сумісність API сервера."</item>
+        <item>"Сканування пристрою…"</item>
+        <item>"Знайдено: "</item>
+        <item>"Не вдалося прочитати медіатеку"</item>
+        <item>"Можна додати окремі файли через «Відкрити аудіофайли»"</item>
+        <item>"Не вдалося імпортувати вибрані файли"</item>
+        <item>"Назва станції"</item>
+        <item>"Пряме http(s) посилання на аудіопотік"</item>
+        <item>"Інтернет-радіо"</item>
+        <item>"Додати"</item>
+        <item>"Вкажіть коректне пряме посилання на потік"</item>
+        <item>"Згорнути плеєр"</item>
+        <item>"Зараз відтворюється"</item>
+        <item>"Додати або прибрати з улюбленого"</item>
+        <item>"Позиція відтворення"</item>
+        <item>"Перемішування"</item>
+        <item>"Попередня композиція"</item>
+        <item>"Наступна композиція"</item>
+        <item>"Повтор"</item>
+        <item>"Таймер сну"</item>
+        <item>"Пауза"</item>
+        <item>"Повтор вимкнено"</item>
+        <item>"Повтор композиції"</item>
+        <item>"Повтор черги"</item>
+        <item>"Вимкнути"</item>
+        <item>"15 хвилин"</item>
+        <item>"30 хвилин"</item>
+        <item>"45 хвилин"</item>
+        <item>"60 хвилин"</item>
+        <item>"90 хвилин"</item>
+        <item>"Персоналізація"</item>
+        <item>"Акцентний колір, фон і сітка обкладинок"</item>
+        <item>"Медіатека"</item>
+        <item>"Сервери, файли та синхронізація"</item>
+        <item>"Завантажені композиції"</item>
+        <item>"Відтворення"</item>
+        <item>"Частоти, підсилення та пресети"</item>
+        <item>"Швидкість"</item>
+        <item>"Швидкість відтворення"</item>
+        <item>"Зупинка відтворення за таймером"</item>
+        <item>"Помилка"</item>
+        <item>"Редагувати сервер"</item>
+        <item>"Закрити"</item>
+        <item>"Під’єднайте свою музичну бібліотеку. Вкажіть адресу сервера та облікові дані."</item>
+        <item>"Назва джерела (необов’язково)"</item>
+        <item>"Наприклад: Домашня музика"</item>
+        <item>"Адреса сервера"</item>
+        <item>"Адреса Subsonic / OpenSubsonic без /rest. Додайте порт, якщо він потрібний."</item>
+        <item>"Ім’я користувача"</item>
+        <item>"Ваш логін"</item>
+        <item>"Пароль"</item>
+        <item>"Пароль сервера"</item>
+        <item>"Показати пароль"</item>
+        <item>"Зберегти й синхронізувати"</item>
+        <item>"Вкажіть повну адресу http:// або https://"</item>
+        <item>"Не вдалося зберегти джерело. Спробуйте ще раз."</item>
+        <item>"композиція"</item>
+        <item>"композиції"</item>
+        <item>"композицій"</item>
+        <item>"Невідомий альбом"</item>
+        <item>"Закрити чергу"</item>
+        <item>"Черга порожня\nОберіть композицію у бібліотеці."</item>
+        <item>"Порядок у черзі"</item>
+        <item>"Видалити з черги"</item>
+        <item>"Зараз · "</item>
+        <item>", поточна композиція"</item>
+        <item>"Змінити порядок: "</item>
+        <item>"Перемістити вище"</item>
+        <item>"Перемістити нижче"</item>
+        <item>"Видалити з черги: "</item>
+    </string-array>
+    <array name="legacy_text_ids" translatable="false">
+        <item>@string/ui_invalid_server_address</item>
+        <item>@string/ui_enter_http_s_server_port_path_without</item>
+        <item>@string/ui_untitled</item>
+        <item>@string/ui_unknown_artist</item>
+        <item>@string/ui_no_album</item>
+        <item>@string/ui_flat</item>
+        <item>@string/ui_could_not_save_favorites_on_this_phone</item>
+        <item>@string/ui_favorite_changes_are_saved_on_this_phone</item>
+        <item>@string/ui_this_playlist_is_read_only</item>
+        <item>@string/ui_source_removed</item>
+        <item>@string/ui_the_track_belongs_to_another_source</item>
+        <item>@string/ui_offline_music</item>
+        <item>@string/ui_selfonium_offline</item>
+        <item>@string/ui_cancel</item>
+        <item>@string/ui_downloading</item>
+        <item>@string/ui_saved_for_offline_listening</item>
+        <item>@string/ui_download_canceled</item>
+        <item>@string/ui_download_failed_check_the_source_and_free</item>
+        <item>@string/ui_mb</item>
+        <item>@string/ui_media_library_unavailable</item>
+        <item>@string/ui_audio_file</item>
+        <item>@string/ui_enter_a_name</item>
+        <item>@string/ui_could_not_open_source_storage_data_has</item>
+        <item>@string/ui_could_not_save_sources</item>
+        <item>@string/ui_the_server_is_repeating_album_pages</item>
+        <item>@string/ui_could_not_read_the_album</item>
+        <item>@string/ui_tracks</item>
+        <item>@string/ui_the_server_created_the_playlist_but_did</item>
+        <item>@string/ui_the_playlist_changed_on_the_server_refresh</item>
+        <item>@string/ui_source_unavailable_only_subsonic_opensubsonic_is_supported</item>
+        <item>@string/ui_operation_canceled</item>
+        <item>@string/ui_the_server_returned_a_redirect_without_a</item>
+        <item>@string/ui_the_server_redirects_to_another_host_enter</item>
+        <item>@string/ui_check_the_final_api_url</item>
+        <item>@string/ui_too_many_redirects</item>
+        <item>@string/ui_the_response_exceeds_32_mb</item>
+        <item>@string/ui_the_track_was_removed_from_the_library</item>
+        <item>@string/ui_could_not_open_audio_check_the_source</item>
+        <item>@string/ui_the_server_returned_an_invalid_audio_range</item>
+        <item>@string/ui_the_audio_stream_was_interrupted</item>
+        <item>@string/ui_track_actions</item>
+        <item>@string/ui_actions_for</item>
+        <item>@string/ui_close_appearance</item>
+        <item>@string/ui_appearance</item>
+        <item>@string/ui_accent_color</item>
+        <item>@string/ui_lilac</item>
+        <item>@string/ui_blue</item>
+        <item>@string/ui_mint</item>
+        <item>@string/ui_green</item>
+        <item>@string/ui_gold</item>
+        <item>@string/ui_peach</item>
+        <item>@string/ui_pink</item>
+        <item>@string/ui_silver</item>
+        <item>@string/ui_accent</item>
+        <item>@string/ui_custom_accent_color</item>
+        <item>@string/ui_selected_button_preview</item>
+        <item>@string/ui_background</item>
+        <item>@string/ui_amoled_black_background</item>
+        <item>@string/ui_cover_columns</item>
+        <item>@string/ui_columns</item>
+        <item>@string/ui_apply</item>
+        <item>@string/ui_restore_default_appearance</item>
+        <item>@string/ui_custom_color_06x</item>
+        <item>@string/ui_color_rrggbb</item>
+        <item>@string/ui_choose</item>
+        <item>@string/ui_for_example_a7c7ff</item>
+        <item>@string/ui_choose_a_lighter_color_for_readable_text</item>
+        <item>@string/ui_close_equalizer</item>
+        <item>@string/ui_equalizer</item>
+        <item>@string/ui_reset_equalizer</item>
+        <item>@string/ui_presets</item>
+        <item>@string/ui_save_custom_preset</item>
+        <item>@string/ui_equalizer_frequency_response</item>
+        <item>@string/ui_preamp</item>
+        <item>@string/ui_hz_gain</item>
+        <item>@string/ui_automatic_headroom</item>
+        <item>@string/ui_only_affects_selfonium_playback_tap_a_value</item>
+        <item>@string/ui_hz</item>
+        <item>@string/ui_custom</item>
+        <item>@string/ui_preset</item>
+        <item>@string/ui_compensation_1f_db_reduces_the_risk_of</item>
+        <item>@string/ui_level_is_adjusted_manually_with_preamp</item>
+        <item>@string/ui_delete_custom_preset</item>
+        <item>@string/ui_equalizer_presets</item>
+        <item>@string/ui_delete_custom_preset_84</item>
+        <item>@string/ui_delete</item>
+        <item>@string/ui_delete_86</item>
+        <item>@string/ui_preset_name</item>
+        <item>@string/ui_save_preset</item>
+        <item>@string/ui_save</item>
+        <item>@string/ui_replace_preset</item>
+        <item>@string/ui_replace</item>
+        <item>@string/ui_hz_92</item>
+        <item>@string/ui_enter_a_number_from_12_to_12</item>
+        <item>@string/ui_tracks_94</item>
+        <item>@string/ui_albums</item>
+        <item>@string/ui_favorites</item>
+        <item>@string/ui_playback_failed_check_the_network_or_file</item>
+        <item>@string/ui_could_not_connect_to_the_player</item>
+        <item>@string/ui_back</item>
+        <item>@string/ui_filter_sources</item>
+        <item>@string/ui_menu</item>
+        <item>@string/ui_choose_a_track</item>
+        <item>@string/ui_open_library</item>
+        <item>@string/ui_play</item>
+        <item>@string/ui_home</item>
+        <item>@string/ui_library</item>
+        <item>@string/ui_search</item>
+        <item>@string/ui_settings</item>
+        <item>@string/ui_playback_queue</item>
+        <item>@string/ui_music_sources</item>
+        <item>@string/ui_all_sources</item>
+        <item>@string/ui_on_device</item>
+        <item>@string/ui_imported_files</item>
+        <item>@string/ui_radio</item>
+        <item>@string/ui_library_sources</item>
+        <item>@string/ui_syncing</item>
+        <item>@string/ui_your_music</item>
+        <item>@string/ui_connect_a_music_server_or_add_files</item>
+        <item>@string/ui_add_source</item>
+        <item>@string/ui_track_mix</item>
+        <item>@string/ui_album_mix</item>
+        <item>@string/ui_queue</item>
+        <item>@string/ui_favorite_tracks</item>
+        <item>@string/ui_recently_played</item>
+        <item>@string/ui_browse</item>
+        <item>@string/ui_playlists</item>
+        <item>@string/ui_artists</item>
+        <item>@string/ui_offline</item>
+        <item>@string/ui_files</item>
+        <item>@string/ui_library_sections</item>
+        <item>@string/ui_search_131</item>
+        <item>@string/ui_tracks_albums_artists</item>
+        <item>@string/ui_clear_search</item>
+        <item>@string/ui_change_column_count</item>
+        <item>@string/ui_more</item>
+        <item>@string/ui_more_library_sections</item>
+        <item>@string/ui_sort</item>
+        <item>@string/ui_by_title</item>
+        <item>@string/ui_by_artist</item>
+        <item>@string/ui_by_album</item>
+        <item>@string/ui_by_duration</item>
+        <item>@string/ui_search_your_music</item>
+        <item>@string/ui_find_your_music</item>
+        <item>@string/ui_enter_a_track_album_or_artist_name</item>
+        <item>@string/ui_nothing_found</item>
+        <item>@string/ui_nothing_here_yet</item>
+        <item>@string/ui_try_another_search_or_change_the_source</item>
+        <item>@string/ui_add_music_or_change_the_source_filter</item>
+        <item>@string/ui_album</item>
+        <item>@string/ui_albums_150</item>
+        <item>@string/ui_albums_151</item>
+        <item>@string/ui_artist</item>
+        <item>@string/ui_artists_153</item>
+        <item>@string/ui_artists_154</item>
+        <item>@string/ui_no_tracks_yet</item>
+        <item>@string/ui_add_a_source_or_change_the_filter</item>
+        <item>@string/ui_album_157</item>
+        <item>@string/ui_artist_158</item>
+        <item>@string/ui_shuffle</item>
+        <item>@string/ui_connecting_to_the_player</item>
+        <item>@string/ui_play_next</item>
+        <item>@string/ui_add_to_queue</item>
+        <item>@string/ui_remove_from_favorites</item>
+        <item>@string/ui_add_to_favorites</item>
+        <item>@string/ui_remove_from_this_playlist</item>
+        <item>@string/ui_add_to_playlist</item>
+        <item>@string/ui_delete_offline_copy</item>
+        <item>@string/ui_download_offline</item>
+        <item>@string/ui_delete_the_downloaded_copy_the_original_stays</item>
+        <item>@string/ui_go_to_album</item>
+        <item>@string/ui_information</item>
+        <item>@string/ui_duration</item>
+        <item>@string/ui_source</item>
+        <item>@string/ui_done</item>
+        <item>@string/ui_removed_source</item>
+        <item>@string/ui_source_176</item>
+        <item>@string/ui_a_radio_stream_has_no_end_and</item>
+        <item>@string/ui_added_to_downloads</item>
+        <item>@string/ui_create_playlist</item>
+        <item>@string/ui_on_this_phone_or_a_subsonic_server</item>
+        <item>@string/ui_your_collections</item>
+        <item>@string/ui_refresh_a_subsonic_source_to_import_server</item>
+        <item>@string/ui_on_this_phone</item>
+        <item>@string/ui_read_only</item>
+        <item>@string/ui_playlist_menu</item>
+        <item>@string/ui_open</item>
+        <item>@string/ui_rename</item>
+        <item>@string/ui_playlist_name</item>
+        <item>@string/ui_rename_playlist</item>
+        <item>@string/ui_the_playlist_will_also_be_deleted_on</item>
+        <item>@string/ui_audio_files_will_remain_in_the_library</item>
+        <item>@string/ui_updating_playlist</item>
+        <item>@string/ui_playlist_updated</item>
+        <item>@string/ui_could_not_update_playlist</item>
+        <item>@string/ui_refresh_the_source_before_retrying</item>
+        <item>@string/ui_new_playlist</item>
+        <item>@string/ui_create</item>
+        <item>@string/ui_new_playlist_198</item>
+        <item>@string/ui_pending_sync</item>
+        <item>@string/ui_favorites_200</item>
+        <item>@string/ui_changes_tap_to_retry</item>
+        <item>@string/ui_media_servers</item>
+        <item>@string/ui_sync</item>
+        <item>@string/ui_source_menu</item>
+        <item>@string/ui_add_subsonic_server</item>
+        <item>@string/ui_subsonic_opensubsonic_tested_with_navidrome</item>
+        <item>@string/ui_scan_music</item>
+        <item>@string/ui_audio_files_in_the_android_media_library</item>
+        <item>@string/ui_add_files</item>
+        <item>@string/ui_select_with_the_file_picker</item>
+        <item>@string/ui_add_radio_station</item>
+        <item>@string/ui_direct_audio_stream_url</item>
+        <item>@string/ui_source_tracks</item>
+        <item>@string/ui_edit</item>
+        <item>@string/ui_delete_source</item>
+        <item>@string/ui_delete_this_source_its_entries_and_offline</item>
+        <item>@string/ui_wait_for_the_current_sync_to_finish</item>
+        <item>@string/ui_synced</item>
+        <item>@string/ui_sync_failed</item>
+        <item>@string/ui_the_server_rejected_the_username_or_password</item>
+        <item>@string/ui_this_account_is_not_allowed_to_perform</item>
+        <item>@string/ui_the_item_is_no_longer_available_on</item>
+        <item>@string/ui_the_server_rejected_the_subsonic_request_code</item>
+        <item>@string/ui_server_not_found_check_the_address_and</item>
+        <item>@string/ui_https_verification_failed_check_the_hostname_certificate</item>
+        <item>@string/ui_the_server_timed_out_check_the_network</item>
+        <item>@string/ui_could_not_connect_to_the_server_check</item>
+        <item>@string/ui_the_server_rejected_authentication_check_credentials_or</item>
+        <item>@string/ui_the_server_denied_access_check_this_account</item>
+        <item>@string/ui_the_server_rejected_the_request_http_400</item>
+        <item>@string/ui_api_not_found_http_404_check_the</item>
+        <item>@string/ui_the_server_returned_http</item>
+        <item>@string/ui_check_its_status_and_settings</item>
+        <item>@string/ui_check_the_address_network_and_credentials</item>
+        <item>@string/ui_check_the_server_settings_and_api_compatibility</item>
+        <item>@string/ui_scanning_device</item>
+        <item>@string/ui_found</item>
+        <item>@string/ui_could_not_read_the_media_library</item>
+        <item>@string/ui_you_can_add_individual_files_using_add</item>
+        <item>@string/ui_could_not_import_the_selected_files</item>
+        <item>@string/ui_station_name</item>
+        <item>@string/ui_direct_http_s_audio_stream_url</item>
+        <item>@string/ui_internet_radio</item>
+        <item>@string/ui_add</item>
+        <item>@string/ui_enter_a_valid_direct_stream_url</item>
+        <item>@string/ui_minimize_player</item>
+        <item>@string/ui_now_playing</item>
+        <item>@string/ui_toggle_favorite</item>
+        <item>@string/ui_playback_position</item>
+        <item>@string/ui_shuffle_250</item>
+        <item>@string/ui_previous_track</item>
+        <item>@string/ui_next_track</item>
+        <item>@string/ui_repeat</item>
+        <item>@string/ui_sleep_timer</item>
+        <item>@string/ui_pause</item>
+        <item>@string/ui_repeat_off</item>
+        <item>@string/ui_repeat_track</item>
+        <item>@string/ui_repeat_queue</item>
+        <item>@string/ui_disable</item>
+        <item>@string/ui_15_minutes</item>
+        <item>@string/ui_30_minutes</item>
+        <item>@string/ui_45_minutes</item>
+        <item>@string/ui_60_minutes</item>
+        <item>@string/ui_90_minutes</item>
+        <item>@string/ui_personalization</item>
+        <item>@string/ui_accent_color_background_and_cover_grid</item>
+        <item>@string/ui_media_library</item>
+        <item>@string/ui_servers_files_and_sync</item>
+        <item>@string/ui_downloaded_tracks</item>
+        <item>@string/ui_playback</item>
+        <item>@string/ui_bands_gain_and_presets</item>
+        <item>@string/ui_speed</item>
+        <item>@string/ui_playback_speed</item>
+        <item>@string/ui_stop_playback_after_a_timer</item>
+        <item>@string/ui_error</item>
+        <item>@string/ui_edit_server</item>
+        <item>@string/ui_close</item>
+        <item>@string/ui_connect_your_music_library_enter_the_server</item>
+        <item>@string/ui_source_name_optional</item>
+        <item>@string/ui_for_example_home_music</item>
+        <item>@string/ui_server_address</item>
+        <item>@string/ui_subsonic_opensubsonic_url_without_rest_include_a</item>
+        <item>@string/ui_username</item>
+        <item>@string/ui_your_username</item>
+        <item>@string/ui_password</item>
+        <item>@string/ui_server_password</item>
+        <item>@string/ui_show_password</item>
+        <item>@string/ui_save_and_sync</item>
+        <item>@string/ui_enter_a_full_http_or_https_url</item>
+        <item>@string/ui_could_not_save_the_source_try_again</item>
+        <item>@string/ui_track</item>
+        <item>@string/ui_tracks_292</item>
+        <item>@string/ui_tracks_293</item>
+        <item>@string/ui_unknown_album</item>
+        <item>@string/ui_close_queue</item>
+        <item>@string/ui_the_queue_is_empty_choose_a_track</item>
+        <item>@string/ui_queue_order</item>
+        <item>@string/ui_remove_from_queue</item>
+        <item>@string/ui_now</item>
+        <item>@string/ui_current_track</item>
+        <item>@string/ui_reorder</item>
+        <item>@string/ui_move_up</item>
+        <item>@string/ui_move_down</item>
+        <item>@string/ui_remove_from_queue_304</item>
+    </array>
+</resources>

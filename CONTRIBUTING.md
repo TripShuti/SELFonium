@@ -21,3 +21,13 @@ Pull requests must not receive signing credentials. Changes to workflows, Gradle
 Official release signing uses the existing pinned certificate. Do not generate a replacement key or change the certificate pin to bypass an error. Publishing remains disabled until the maintainer explicitly enables it and configures the protected signing environment. Maintainer-specific key, backup and activation instructions are kept outside the repository.
 
 Use descriptive commits and do not rewrite shared history without agreement. Publishing or uploading signing secrets is a separate maintainer action, not part of a contribution build.
+
+## Localization
+
+English resources in `app/src/main/res/values/strings.xml` and `updates.xml` are the fallback. Ukrainian, Polish, German, French and Spanish use the matching `values-<language>` folders. Keep resource names and format placeholders consistent; use Android quantity resources for counts. `bash scripts/test-core.sh` checks resource parity, placeholders, plural coverage and language selection without a device.
+
+`AppLanguage` uses framework per-app locales on Android 13+ and a private preference plus activity recreation on Android 8–12. Declare supported languages in `xml/locales_config.xml` and `LanguagePolicy`. The language picker uses native language names.
+
+Stored navigation tokens and built-in equalizer preset keys predate localization. Keep them stable: translate their displayed labels, not the stored values. `locale_legacy.xml` maps known internal messages and navigation tokens to resources. Do not apply that lookup to arbitrary server metadata, playlist names or custom presets. Release notes and server-provided error text are displayed as supplied.
+
+Review translations in context and test long labels, quantities and system/in-app language changes before a release. Host tests do not verify Android rendering or activity/service lifecycle behavior.

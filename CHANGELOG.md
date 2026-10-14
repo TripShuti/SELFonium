@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add English, Ukrainian, Polish, German, French and Spanish UI resources, localized quantities and equalizer preset labels.
+- Follow supported device languages with an English fallback, and add a persistent language selector using Android 13 per-app language settings where available. Keep navigation and preset storage keys unchanged.
+
 - Add in-app stable GitHub release checks with daily foreground scheduling, an opt-out, persisted check times and one reminder per version.
 - Add a themed Updates screen, literal release notes, cancellable private-cache APK downloads and progress reporting.
 - Verify APK size/hash, package/version/SDK and installed signing identity before read-only FileProvider handoff to Android’s user-confirmed installer.

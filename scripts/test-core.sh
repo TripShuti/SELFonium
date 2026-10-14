@@ -8,6 +8,8 @@ trap 'rm -rf "$test_output"' EXIT
 "$javac_bin" --release 17 -d "$test_output" app/src/main/java/app/selfonium/core/*.java app/src/test/java/app/selfonium/core/*.java scripts/CheckJavaSyntax.java
 "$java_bin" -cp "$test_output" app.selfonium.core.CoreTest
 "$java_bin" -cp "$test_output" app.selfonium.core.GraphicEqualizerTest
+"$java_bin" -cp "$test_output" app.selfonium.core.LanguagePolicyTest
 "$java_bin" -cp "$test_output" CheckJavaSyntax
 python3 scripts/check-project.py
 python3 scripts/test-storage.py
+python3 scripts/test-localization.py

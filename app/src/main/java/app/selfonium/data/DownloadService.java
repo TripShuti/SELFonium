@@ -1,5 +1,8 @@
 package app.selfonium.data;
 
+import app.selfonium.locale.Texts;
+import app.selfonium.R;
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -7,7 +10,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
-import app.selfonium.R;
 import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Protocol;
 import app.selfonium.core.Track;
@@ -24,20 +26,21 @@ import java.util.concurrent.Executors;
 
 public final class DownloadService extends Service {
     private final ExecutorService worker=Executors.newSingleThreadExecutor();private volatile boolean cancelled;private int pending;
-    @Override public void onCreate(){super.onCreate();getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel("downloads","Офлайн-музика",NotificationManager.IMPORTANCE_LOW));}
+    @Override protected void attachBaseContext(android.content.Context base){super.attachBaseContext(app.selfonium.locale.AppLanguage.wrap(base));}
+    @Override public void onCreate(){super.onCreate();getSystemService(NotificationManager.class).createNotificationChannel(new NotificationChannel("downloads",Texts.get(DownloadService.this,R.string.ui_offline_music),NotificationManager.IMPORTANCE_LOW));}
     private Notification notification(String text,boolean active){
         var open=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE);
         var cancel=PendingIntent.getService(this,1,new Intent(this,DownloadService.class).setAction("cancel"),PendingIntent.FLAG_IMMUTABLE);
-        var builder=new Notification.Builder(this,"downloads").setSmallIcon(R.drawable.ic_selfonium).setContentTitle("SELFonium · Офлайн").setContentText(text).setContentIntent(open).setOngoing(active);
-        if(active)builder.addAction(new Notification.Action.Builder((android.graphics.drawable.Icon)null,"Скасувати",cancel).build());return builder.build();
+        var builder=new Notification.Builder(this,"downloads").setSmallIcon(R.drawable.ic_selfonium).setContentTitle(Texts.get(DownloadService.this,R.string.ui_selfonium_offline)).setContentText(text).setContentIntent(open).setOngoing(active);
+        if(active)builder.addAction(new Notification.Action.Builder((android.graphics.drawable.Icon)null,Texts.get(DownloadService.this,R.string.ui_cancel),cancel).build());return builder.build();
     }
     @Override public int onStartCommand(Intent intent,int flags,int startId){
         if(intent==null){stopSelf();return START_NOT_STICKY;}
         if("cancel".equals(intent.getAction())){cancelled=true;worker.shutdownNow();stopForeground(STOP_FOREGROUND_REMOVE);stopSelf();return START_NOT_STICKY;}
         String id=intent.getStringExtra("track");if(id==null){stopSelf();return START_NOT_STICKY;}
-        startForeground(42,notification("Завантаження…",true));pending++;
+        startForeground(42,notification(Texts.get(DownloadService.this,R.string.ui_downloading),true));pending++;
         worker.execute(()->{String status;
-            try{download(id);status="Збережено для офлайн-прослуховування";}catch(Exception e){status=cancelled?"Завантаження скасовано":"Не вдалося завантажити. Перевірте джерело та вільне місце.";}
+            try{download(id);status=Texts.get(DownloadService.this,R.string.ui_saved_for_offline_listening);}catch(Exception e){status=cancelled?Texts.get(DownloadService.this,R.string.ui_download_canceled):Texts.get(DownloadService.this,R.string.ui_download_failed_check_the_source_and_free);}
             String result=status;new android.os.Handler(getMainLooper()).post(()->{pending--;if(pending==0){stopForeground(STOP_FOREGROUND_REMOVE);if(!cancelled)getSystemService(NotificationManager.class).notify(43,notification(result,false));stopSelf();}});
         });return START_NOT_STICKY;
     }
@@ -57,7 +60,7 @@ public final class DownloadService extends Service {
     private void copy(InputStream in,FileOutputStream out,long expected,String title)throws Exception{
         byte[] buffer=new byte[65536];long total=0,last=0;int n;
         while((n=in.read(buffer))!=-1){if(cancelled||Thread.currentThread().isInterrupted())throw new InterruptedException();out.write(buffer,0,n);total+=n;
-            long now=System.currentTimeMillis();if(now-last>1000){last=now;getSystemService(NotificationManager.class).notify(42,notification(title+" · "+(total/1048576)+" МБ",true));}}
+            long now=System.currentTimeMillis();if(now-last>1000){last=now;getSystemService(NotificationManager.class).notify(42,notification(title+" · "+(total/1048576)+Texts.get(DownloadService.this,R.string.ui_mb),true));}}
         if(expected>=0&&total!=expected)throw new java.io.EOFException();out.getFD().sync();
     }
     @Override public void onDestroy(){cancelled=true;worker.shutdownNow();super.onDestroy();}

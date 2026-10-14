@@ -1,5 +1,8 @@
 package app.selfonium.data;
 
+import app.selfonium.locale.Texts;
+import app.selfonium.R;
+
 import android.content.ContentUris;
 import android.content.Context;
 import android.database.Cursor;
@@ -16,7 +19,7 @@ public final class LocalMusic {
         List<Track> result=new ArrayList<>();
         String[] columns={"_id","title","artist","album","duration","track"};
         try(Cursor c=context.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,columns,null,null,"title COLLATE NOCASE")){
-            if(c==null)throw new IllegalStateException("Медіатека недоступна");
+            if(c==null)throw new IllegalStateException(Texts.get(context,R.string.ui_media_library_unavailable));
             while(c.moveToNext()) {
                 String id=c.getString(0);String uri=ContentUris.withAppendedId(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,c.getLong(0)).toString();
                 result.add(new Track("device:"+id,"device",id,c.getString(1),c.getString(2),c.getString(3),uri,c.getLong(4),c.getInt(5)%1000));

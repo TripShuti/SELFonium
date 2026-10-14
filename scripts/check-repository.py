@@ -28,7 +28,7 @@ def main():
     forbidden_dirs = {'.tooling', '.gradle', '.idea', '.vscode', '.agents',
                       '.codex', 'build', 'captures', '__pycache__'}
     forbidden_names = {'local.properties', 'key.properties', 'keystore.properties',
-                       'secrets.properties', 'google-services.json'}
+                       'secrets.properties', 'signing.json', 'store-password', 'google-services.json'}
     forbidden_suffixes = {'.apk', '.aab', '.apks', '.apkm', '.dex', '.jar', '.class',
                           '.zip', '.tar', '.gz', '.xz', '.jks', '.keystore', '.pem',
                           '.p12', '.pfx', '.db', '.sqlite', '.sqlite3', '.log', '.pyc'}
@@ -62,15 +62,32 @@ def main():
         if machine_path.search(text):
             errors.append(f'{name}: machine-specific home path')
         if path.suffix == '.md':
-            for link in re.findall(r'\]\(([^\s)]+)\)', text):
-                if link.startswith(('#', 'https://', 'http://', 'mailto:')):
+            # HTML images are used in the README; validate them alongside Markdown links.
+            links = re.findall(r'\]\(([^\s)]+)\)', text)
+            links += re.findall(r'<(?:img|a)\b[^>]*?\b(?:src|href)=["\']([^"\']+)["\']', text, re.I)
+            for link in links:
+                if link.startswith(('https://', 'http://', 'mailto:')):
                     continue
-                target = unquote(link.split('#', 1)[0].split('?', 1)[0])
-                if not target:
-                    continue
-                resolved = posixpath.normpath(posixpath.join(str(path.parent), target))
-                if resolved not in entries and not any(p.startswith(resolved.rstrip('/') + '/') for p in entries):
+                target, _, anchor = unquote(link).partition('#')
+                target = target.split('?', 1)[0]
+                resolved = posixpath.normpath(posixpath.join(str(path.parent), target)) if target else name
+                if resolved not in entries:
+                    if not anchor and any(p.startswith(resolved.rstrip('/') + '/') for p in entries):
+                        continue
                     errors.append(f'{name}: link target is not tracked: {target}')
+                    continue
+                if anchor and resolved.endswith('.md'):
+                    destination = git('cat-file', 'blob', entries[resolved][1]).decode('utf-8')
+                    anchors = set()
+                    counts = {}
+                    for heading in re.findall(r'^#{1,6} +(.+?) *#*$', destination, re.M):
+                        slug = re.sub(r'[^\w -]', '', heading.lower()).replace(' ', '-')
+                        count = counts.get(slug, 0)
+                        counts[slug] = count + 1
+                        anchors.add(slug if count == 0 else f'{slug}-{count}')
+                    anchors.update(re.findall(r'\b(?:id|name)=["\']([^"\']+)["\']', destination))
+                    if anchor not in anchors:
+                        errors.append(f'{name}: missing Markdown anchor: {resolved}#{anchor}')
     if not entries:
         errors.append('No staged/tracked files; stage the intended files first.')
     if errors:

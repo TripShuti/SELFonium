@@ -4,18 +4,21 @@ about: Report a reproducible problem
 labels: bug
 ---
 
-**App version / Android version / device**
+**App version, Android version and device**
 
-**Source type and server version**
+**Source and server version**
+For a remote source, specify the Subsonic-compatible server and its version.
 
 **Steps to reproduce**
+
 1.
 2.
 3.
 
-**Expected result**
+**Expected behavior**
 
-**Actual result**
+**Actual behavior**
 
 **Logs or screenshots**
-Remove passwords, tokens and personal server addresses before attaching them.
+
+Remove passwords, tokens, authenticated URLs and personal server addresses. Include whether the issue occurs offline or only on a particular audio route when relevant.

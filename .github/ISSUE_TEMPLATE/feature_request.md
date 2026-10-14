@@ -1,11 +1,15 @@
 ---
 name: Feature request
-about: Describe a useful improvement
+about: Suggest an improvement
 labels: enhancement
 ---
 
-**What are you trying to do?**
+**Problem or use case**
+
+Describe what you are trying to accomplish.
 
 **Proposed behavior**
 
-**Alternatives or relevant constraints**
+**Alternatives or constraints**
+
+For server features, identify the relevant Subsonic/OpenSubsonic capability if known. Do not include account credentials.

@@ -11,7 +11,7 @@ if [ -z "$sdk_dir" ]; then
     done
 fi
 if [ -z "$sdk_dir" ] || [ ! -f "$sdk_dir/platforms/android-35/android.jar" ]; then
-    echo 'Android SDK Platform 35 is missing. See README.md → Збірка.' >&2
+    echo 'Android SDK Platform 35 is missing. See docs/BUILDING.md.' >&2
     exit 3
 fi
 export ANDROID_HOME="$sdk_dir"

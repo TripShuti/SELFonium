@@ -1,33 +1,37 @@
-# Можливості та межі
+# Features and limitations
 
-| Джерело | Реалізовано | Поки відсутнє / не перевірено |
+## Sources
+
+| Source | Implemented | Limits |
 |---|---|---|
-| Локальні файли | MediaStore, document picker, embedded covers | Рекурсивний folder scanner |
-| Subsonic / OpenSubsonic | Token authentication, альбоми/треки, streaming, artwork, двобічні лайки композицій і серверні плейлисти | Scrobbling, ratings, lyrics, позначки альбомів/виконавців; зміни плейлистів потребують мережі; Navidrome перевірений на пристрої |
-| Радіо | Прямі HTTP(S) URL, HLS URL із .m3u8 | Каталог станцій, M3U/PLS resolution |
+| Subsonic / OpenSubsonic | Token authentication, album/track catalog, raw streaming, covers, track favorites and server playlists | Navidrome is the primary device-tested server; other implementations are best-effort |
+| Local audio | Android MediaStore scan, document-picker import, embedded artwork | No recursive folder scanner |
+| Radio | Direct HTTP(S) audio streams and `.m3u8` HLS URLs | No station directory or M3U/PLS playlist resolution |
 
-Вигляд дозволяє обрати акцент із палітри або ввести HEX-колір, увімкнути чорний фон AMOLED та змінити кількість колонок. Налаштування зберігаються після перезапуску.
+Only Subsonic/OpenSubsonic is supported as a remote library API. OpenSubsonic extension names and versions are discovered when advertised, but optional extension features are not implemented merely because discovery succeeds. API-key authentication, scrobbling, ratings, album/artist stars and lyrics are not implemented. [SYNCHRONIZATION.md](SYNCHRONIZATION.md) lists the endpoints and behavior.
 
-Іконка запуску — Resonance Mint. Редактор джерела відкривається на весь екран: поля на повну ширину, постійні підписи, прокручування при відкритій клавіатурі та перемикач видимості пароля. Єдина форма «Додати Subsonic-сервер» містить URL, логін, пароль та необов’язкову назву; окремого перемикача Navidrome немає.
+Retired source records remain encrypted and hidden after upgrades. Their stored library entries and downloaded files are retained; their removed online connectors cannot play remote files.
 
-Бібліотека відкривається одразу на альбомах, виконавцях або композиціях; остання категорія зберігається при переходах між вкладками. Для обкладинок можна обрати 2 або 3 колонки. Сторінки альбому мають нумерований список треків, сторінки виконавця — добірку альбомів. Для виконавця поки використовується обкладинка одного з його альбомів або окрема заглушка; завантаження справжніх фотографій виконавців відсутнє. У горизонтальному режимі бібліотека використовує компактні картки, а плеєр показує обкладинку та керування у двох колонках.
+## Library and playback
 
-Пошук, локальні й серверні плейлисти Subsonic, улюблене, історія, офлайн-файли й керування чергою спільні для бібліотеки. Пошук зберігає до п’яти запитів після підтвердження або вибору результату. Черга показує обкладинки й виконавців, дозволяє видаляти композиції та переміщувати їх вище/нижче через меню; перетягування поки відсутнє. Зберігаються черга/позиція; автоматичний autoplay після запуску не виконується.
+Browse albums, artists and tracks; search locally, filter sources and view favorites, history, playlists and offline files. Search keeps up to five confirmed queries. Album pages have ordered tracks; artist pages group albums. Artist artwork uses an album cover or placeholder, not a downloaded artist photograph.
 
-Еквалайзер має власний PCM DSP: 10 смуг, Preamp, 18 пресетів, збереження власних кривих та автозапас рівня. Працює незалежно від системних смуг Android. Вихід PCM16; offload та encoded passthrough вимкнені. Немає параметричного редактора, AutoEQ, системного EQ для інших застосунків або bit-perfect output. Деталі й перевірки — у [EQUALIZER.md](EQUALIZER.md).
+The queue supports selection, removal and move-up/move-down actions. Shuffle, repeat, playback speed, media notifications, lock-screen controls and a sleep timer are available. Queue/index/position are restored paused after restart. Drag-and-drop reordering and crossfade are not implemented.
 
-Офлайн-завантаження зберігає цілий файл через тимчасову `.part`-копію. Resume, автоматичні правила кешування та квоти ще не реалізовані.
+Server favorites sync both ways and retain pending changes offline. Server playlists preserve ordering and repeated entries; creating, renaming, editing and deleting owned lists requires connectivity. Local playlists are separate.
 
-HTTPS довіряє системним CA та CA, встановленим користувачем у сховище сертифікатів Android. Це дозволяє підключатися до домашніх серверів із приватним CA, наприклад Caddy: спочатку встанови кореневий CA на телефон як сертифікат центру сертифікації, потім використовуй адресу, зазначену в сертифікаті сервера. Перевірка ланцюжка сертифікатів, строку дії та імені сервера залишається ввімкненою. Окремий імпорт CA для одного джерела поки не реалізований. [Налаштування довіри Android](https://developer.android.com/privacy-and-security/security-config).
+Offline downloads save whole files before marking them available. There is no download resume, automatic download policy or offline-file quota. The 192 MB evictable audio cache and next-track prefetch are separate from deliberate downloads. Android can remove cached data.
 
-HTTP підтримується для локальних серверів. Авторизовані redirects на інший origin відхиляються. Credentials джерел шифруються через Android Keystore; резервний експорт цих даних не реалізований.
+## Interface and audio
 
-Android Auto, Cast, UPnP/DLNA, SMB, cloud OAuth, синхронізовані тексти та widgets поки не підтримуються.
+The UI is currently Ukrainian. Appearance settings provide accent colors, a custom HEX accent, an AMOLED background and two/three-column cover grids. Portrait and landscape players use adaptive layouts.
 
-Кеш аудіо обмежено 192 МБ; початок наступної композиції підвантажується у фоні. Кеш обкладинок і повторне використання черги зменшують роботу під час перемикання. Улюблене Subsonic має збережену чергу невідправлених змін; серверні плейлисти імпортуються з порядком і повторами. Подробиці та межі — у [SYNCHRONIZATION.md](SYNCHRONIZATION.md).
+The [graphic equalizer](EQUALIZER.md) has ten fixed bands, preamp, 18 built-in presets, saved presets and automatic headroom. It processes this app's PCM16 output. PEQ, AutoEQ import, system-wide equalization, encoded passthrough, audio offload and bit-perfect output are not available.
 
-Navidrome — офіційно тестований сервер; інші реалізації Subsonic підтримуються best-effort. Код клієнта використовує протокол, а не специфічні Navidrome API. Під час синхронізації клієнт визначає версії розширень через [getOpenSubsonicExtensions](https://opensubsonic.netlify.app/docs/endpoints/getopensubsonicextensions/), якщо сервер оголошує OpenSubsonic; відсутність або помилка discovery не блокує базову бібліотеку. Окремі функції розширень (наприклад, lyrics) поки не реалізовані.
+## Network and storage
 
-Після оновлення джерела видалених типів приховані; їхні записи залишаються зашифрованими в сховищі, а бібліотека, локальні плейлисти, лайки й завантажені файли не видаляються. Онлайн-відтворення з таких джерел недоступне; збережені офлайн-файли залишаються придатними до відтворення.
+HTTPS trusts Android system and user-installed CAs while retaining hostname, chain and validity checks. For a home server using a private CA, install that CA in Android and use a hostname included in the server certificate. Per-source certificate import is not implemented. HTTP is accepted; use HTTPS over untrusted networks.
 
-Повна синхронізація каталогу використовує максимум три паралельні запити альбомів; лайки й редагування плейлистів не чекають завершення всього каталогу. Неповні або некоректні відповіді не підміняють збережені знімки порожніми. Інкрементальної синхронізації поки немає. Відновлення черги враховує видалені композиції та не переносить їхню позицію на інший трек.
+Source credentials are encrypted in private storage with Android Keystore. Automatic app backup is disabled; credential export is not implemented. Authenticated cross-origin redirects are rejected.
+
+Android Auto, Cast, UPnP/DLNA, SMB, cloud OAuth and widgets are not implemented. See the [roadmap](ROADMAP.md) for planned work; it is not a support or delivery guarantee.

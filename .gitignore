@@ -28,6 +28,8 @@ reports/
 key.properties
 keystore.properties
 secrets.properties
+signing.json
+store-password
 google-services.json
 
 # Runtime data and personal captures

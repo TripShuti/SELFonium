@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add CI for main pushes and pull requests with Gradle caching, host tests, Android build/lint checks and debug artifacts.
+- Prepare a gated tag-release pipeline with reviewed-main validation, increasing versionCode, isolated signing, verified APK assets and draft publication. Automatic publication remains disabled by default.
+- Rewrite repository documentation in English and document the current Subsonic/OpenSubsonic scope and limitations.
+
+- Add local release automation with a pinned signing certificate, package/version/debuggable checks, ZIP alignment, signature verification and SHA-256/source manifests.
+- Add encrypted signing-key backups and restore instructions; retain the existing release identity and keep passwords outside Git and backup exports.
+- Add release-policy tests and reject signing configuration/password files in repository publication checks.
+
 ## 0.6.2
 
 - Publish SELFonium-0.6.2.apk as a signed release build and update the direct installation link.
@@ -16,6 +24,8 @@
 
 ## 0.6.1
 
+Development milestone; no separate public APK release.
+
 - Focus remote sources on Subsonic/OpenSubsonic, with Navidrome as the primary tested server; remove Jellyfin, Emby, Plex, WebDAV, Kodi and Audiobookshelf adapters and connection choices.
 - Rename the protocol implementation to SubsonicClient; discover optional OpenSubsonic extension versions without requiring them for baseline library synchronization.
 - Retain retired source records encrypted across saves, and preserve existing library, favorites, playlists, queue and downloads.
@@ -24,6 +34,8 @@
 - Inset queue artwork inside rounded row highlights and remove the competing ListView selector.
 
 ## 0.6.0
+
+Development milestone; no separate public APK release.
 
 - Reuse matching playback queues; move queue serialization, restore and checkpoints off the UI thread.
 - Cache track/favorite/source lookups, reuse and coalesce player artwork, avoid repainting the obscured library, prioritize active covers and skip canceled requests.

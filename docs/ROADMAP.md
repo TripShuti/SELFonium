@@ -1,20 +1,29 @@
-# План розвитку
+# Roadmap
 
-## Найближче
+## Implemented
 
-- Розширити тести playback, lifecycle та втрати мережі; зберегти fixture на 3000 альбомів як перевірку порядку й обмеження паралелізму.
-- Перевіряти основні сценарії на Navidrome; розширювати протокольні Subsonic/OpenSubsonic fixtures.
-- Покращити accessibility, локалізацію й адаптацію UI до екранів.
-- Налаштувати стабільний release signing та випуск версій.
+- Subsonic/OpenSubsonic catalog playback, track favorites and server playlists, with Navidrome as the primary tested server.
+- Bounded parallel catalog requests, audio/artwork caching, durable favorite retries and queue recovery.
+- Host-side protocol/DSP/storage tests, including a 3000-album fixture; selected network/restart scenarios on Android 14.
+- Portrait/landscape player layouts and appearance settings.
+- Signed GitHub releases 0.5.1 and 0.6.2 using the same certificate.
+- Local signing/backup tooling and prepared CI/CD workflows. Automated publication is disabled until explicitly activated; hosted workflow execution is not claimed by this list.
 
-## Далі
+## Next
 
-- Спроєктувати інкрементальну синхронізацію за доступними можливостями сервера, зі збереженням базового Subsonic та періодичною перевіркою видалень.
+- Exercise more lifecycle, audio-focus, Bluetooth and network interruption cases, including the minimum supported Android version.
+- Continue Navidrome device testing and expand protocol fixtures for optional capabilities and server errors.
+- Audit TalkBack accessibility, move UI strings into localization resources and test more screen sizes.
+- Configure the protected GitHub signing environment and review repository protections before enabling publication.
+- Move the encrypted signing backup off the development disk and store its password separately when another destination is available.
 
-- Файловий import/export плейлистів, перестановка треків і офлайн-редагування серверних плейлистів.
-- Відновлювані завантаження, користувацькі квоти кешу та розширення роботи без мережі.
-- Тексти композицій через підтримувані розширення OpenSubsonic.
-- Android Auto та віджети.
-- Cast/UPnP як способи відтворення.
+## Later
 
-Пункти не є обіцянками строків. Для конкретної реалізації потрібні issue, перевірка сумісності й тести.
+- Incremental synchronization with protocol-compatible change/removal detection.
+- Playlist file import/export, richer reordering and offline server-playlist editing.
+- Resumable downloads, storage quotas and more offline policies.
+- Lyrics through supported optional APIs.
+- Android Auto, widgets and casting/renderer support.
+- A separate certificate-migration plan if store distribution is introduced.
+
+These are development directions, not delivery dates or guarantees of server compatibility.

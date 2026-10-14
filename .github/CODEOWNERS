@@ -1,0 +1,7 @@
+# Require code owner review in GitHub branch protection to enforce these rules.
+/.github/ @TripShuti
+/scripts/ @TripShuti
+/*.gradle @TripShuti
+/app/build.gradle @TripShuti
+/gradlew @TripShuti
+/AGENTS.md @TripShuti

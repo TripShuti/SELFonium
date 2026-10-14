@@ -1,65 +1,41 @@
-<h1 align="center">
-  <img src="docs/images/selfonium.png" width="64" height="64" alt="Іконка SELFonium — Resonance Mint" />
-  SELFonium
-</h1>
+<h1 align="center"><img src="docs/images/selfonium.png" width="64" height="64" alt="SELFonium icon" /> SELFonium</h1>
 
-<p align="center"><strong>Ваша музика. Ваш сервер.</strong></p>
-<p align="center">Subsonic/OpenSubsonic-клієнт для Android із підтримкою локальної музики.<br />Усі реалізовані функції доступні одразу, без підписок і платного розблокування.</p>
-<p align="center"><strong>Android 8.0+ · Відкритий код · MIT</strong></p>
-<p align="center">
-  <a href="#можливості">Можливості</a> ·
-  <a href="#джерела-музики">Джерела музики</a> ·
-  <a href="#встановлення">Встановлення</a> ·
-  <a href="docs/ROADMAP.md">План розвитку</a>
-</p>
+SELFonium is an open-source Android music player for Subsonic/OpenSubsonic servers and local audio. All implemented features are available without subscriptions or paid unlocks.
 
-## Зазирнути всередину
+Development and device testing focus on **Navidrome**. Other compatible Subsonic servers are supported on a best-effort basis, without a guarantee of full compatibility. The app interface is currently in Ukrainian; this repository's documentation is in English.
 
-| Бібліотека | Плеєр | Еквалайзер | Вигляд |
-|:---:|:---:|:---:|:---:|
-| <img src="docs/images/library.jpg" width="210" alt="Бібліотека: альбоми з обкладинками, вкладки виконавців і композицій" /> | <img src="docs/images/player.jpg" width="210" alt="Повноекранний плеєр з обкладинкою та керуванням відтворенням" /> | <img src="docs/images/equalizer.jpg" width="210" alt="Десятисмуговий еквалайзер, пресет Rock і графік частотної характеристики" /> | <img src="docs/images/appearance.jpg" width="210" alt="Налаштування акцентного кольору, AMOLED-фону та сітки обкладинок" /> |
+## Features
 
-Скріншоти версії **0.5.1** з Android-пристрою. Акцентний колір можна змінити в налаштуваннях.
+- Browse albums, artists and tracks; search your library and keep local playlists, favorites and listening history.
+- Sync Subsonic track favorites and server playlists. Offline favorite changes are saved and retried when connectivity returns.
+- Play local files, download tracks for offline listening and open direct radio streams.
+- Manage the playback queue, shuffle, repeat, playback speed and sleep timer.
+- Adjust a ten-band graphic equalizer with preamp, built-in presets and saved custom settings.
+- Customize the accent color, AMOLED background and album-grid density.
 
-## Можливості
+Server playlist editing requires a connection. OpenSubsonic extension discovery is implemented; features such as synchronized lyrics, scrobbling and API-key authentication are not. See [features and limitations](docs/FEATURES.md).
 
-- **Колекція під рукою.** Альбоми, виконавці, композиції, пошук, улюблене, історія, локальні й серверні плейлисти Subsonic.
-- **Відтворення у фоні.** Системні медіакнопки, черга, перемішування, повтор, швидкість і таймер сну.
-- **Власне звучання.** Десятисмуговий еквалайзер із Preamp, 18 пресетами, збереженням власних налаштувань та автоматичним запасом рівня.
-- **Музика офлайн.** Завантаження композицій із сервера та відтворення файлів із пристрою; обмежений аудіокеш і підвантаження наступного треку.
-- **Ваш вигляд.** Темна тема, палітра акцентів і власний HEX-колір, чорний фон AMOLED, дві або три колонки обкладинок.
-- **Домашній HTTPS.** Підтримка системних та встановлених користувачем CA; облікові дані джерел шифруються через Android Keystore.
+## Screenshots
 
-## Джерела музики
+| Library | Player | Equalizer | Appearance |
+|---|---|---|---|
+| <img src="docs/images/library.jpg" width="200" alt="Album library" /> | <img src="docs/images/player.jpg" width="200" alt="Full-screen player" /> | <img src="docs/images/equalizer.jpg" width="200" alt="Ten-band equalizer" /> | <img src="docs/images/appearance.jpg" width="200" alt="Appearance settings" /> |
 
-SELFonium is a Subsonic/OpenSubsonic music client for Android, developed and tested primarily against Navidrome. Other compatible servers may work, but are not officially tested or guaranteed to be fully supported.
+Screenshots show version 0.5.1. Later versions refine the layout and source setup.
 
-| Компонент | Політика підтримки |
-|---|---|
-| Subsonic API | Основний віддалений протокол: бібліотека, обкладинки, streaming, лайки та плейлисти |
-| OpenSubsonic | Визначення доступних розширень; базові функції не вимагають OpenSubsonic |
-| Navidrome | Основний сервер для розробки та перевірок |
-| Інші Subsonic-сервери | Best-effort, без гарантій повної сумісності |
-| Локальна музика | Медіатека Android та імпорт аудіофайлів |
-| Радіо | Прямі URL потоків, без окремого серверного API |
+## Install
 
-Проєкт активно розвивається. Android Auto, Cast, UPnP/DLNA, SMB та синхронізовані тексти поки не підтримуються. Докладніше про [можливості й обмеження](docs/FEATURES.md).
+Download the APK from [GitHub Releases](https://github.com/TripShuti/SELFonium/releases/latest), open it on your phone and allow installation from that source if Android asks. The current published release is **0.6.2**, with asset `SELFonium-0.6.2.apk`.
 
-## Встановлення
+Requirements: **Android 8.0 or later (API 26)**. Remote playback needs a compatible server account and network access; downloaded and local files can play offline. Grant audio-library and notification permissions when needed.
 
-### Готовий APK
+Install updates over the existing app to retain data. Official updates must use the same signing identity. Local and CI debug builds can have a different signature and are intended for development.
 
-**[Завантажити SELFonium 0.6.2 для Android](https://github.com/TripShuti/SELFonium/releases/download/v0.6.2/SELFonium-0.6.2.apk)** · [Усі релізи](https://github.com/TripShuti/SELFonium/releases)
+To connect a server, open settings using the gear icon, find the music sources section and add a Subsonic server with its base URL, username and password. Do not append `/rest` to the URL. Sync the source, then select a track from the library.
 
-Готовий реліз — **0.6.2**: Subsonic/OpenSubsonic, синхронізація лайків і плейлистів, аудіокеш та покращене відновлення відтворення.
+## Build from source
 
-Завантаж `SELFonium-0.6.2.apk` на телефон, відкрий файл і дозволь встановлення з цього джерела, якщо Android попросить. Потрібен **Android 8.0 або новіший**.
-
-Це рання тестова збірка, підписана поточним ключем розробки. Можна встановлювати поверх попередніх збірок із тим самим підписом, зберігаючи дані. APK, зібраний на іншому комп’ютері, може мати інший підпис.
-
-### Зібрати самостійно
-
-Потрібні JDK 17 або 21 та Android SDK Platform 35 / Build Tools 35.0.0; решта вимог і налаштування середовища описані в [інструкції зі збірки](docs/BUILDING.md).
+Install JDK 17 or 21, Python 3.11+, Android SDK Platform 35 and Build Tools 35.0.0. On Linux:
 
 ```sh
 git clone https://github.com/TripShuti/SELFonium.git
@@ -67,26 +43,16 @@ cd SELFonium
 bash scripts/build.sh
 ```
 
-APK з’явиться в `app/build/outputs/apk/debug/app-debug.apk`. Його можна перенести на телефон і відкрити або встановити через USB:
+The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See [building](docs/BUILDING.md) for SDK setup, release outputs and signing requirements.
 
-```sh
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-```
+## Development
 
-Якщо SDK ще немає, у Linux виконай `bash scripts/setup-android.sh`: скрипт встановить локальні інструменти, запропонує переглянути ліцензії SDK та запустить збірку.
+[Contributing](CONTRIBUTING.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md)
 
-## Перше прослуховування
+Technical details: [server synchronization](docs/SYNCHRONIZATION.md), [equalizer](docs/EQUALIZER.md), [dependencies](docs/DEPENDENCIES.md).
 
-1. Відкрий **Налаштування → Джерела музики** та під’єднай сервер або додай файли з пристрою.
-2. Дочекайся синхронізації, відкрий **Бібліотеку** й натисни композицію для відтворення.
-3. Натисни мініплеєр, щоб відкрити обкладинку, керування чергою та еквалайзер.
+Report reproducible problems through [GitHub Issues](https://github.com/TripShuti/SELFonium/issues). Include the app, Android and server versions and steps to reproduce. Remove credentials and personal data from attachments.
 
-## Долучитися
+## License
 
-Знайшов помилку або маєш ідею? [Створи issue](https://github.com/TripShuti/SELFonium/issues). Для проблем із сервером зазнач тип і версію сервера, версію Android та кроки відтворення, без паролів і токенів.
-
-[Правила внеску](CONTRIBUTING.md) · [Збірка](docs/BUILDING.md) · [Тестування](docs/TESTING.md) · [Еквалайзер](docs/EQUALIZER.md) · [Синхронізація](docs/SYNCHRONIZATION.md) · [Історія змін](CHANGELOG.md)
-
-## Ліцензія
-
-[MIT](LICENSE). Основні залежності та їхні ліцензії — у [DEPENDENCIES.md](docs/DEPENDENCIES.md).
+SELFonium is licensed under the [MIT License](LICENSE). Dependencies retain their own licenses; see [dependency information](docs/DEPENDENCIES.md).

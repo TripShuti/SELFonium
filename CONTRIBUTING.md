@@ -1,29 +1,23 @@
-# Розробка SELFonium
+# Contributing
 
-Почни з [інструкції збірки](docs/BUILDING.md). Базові версії: Java 17, SDK 35, AGP 8.9.2, Gradle 8.11.1. Команди запускаються з кореня репозиторію.
+Use the existing Java, Android Views and Media3 architecture unless a change requires otherwise. Start with [building](docs/BUILDING.md) and work on a focused branch from `main`.
 
-## Робочий процес
+## Changes and validation
 
-1. Онови `main` через `git pull --ff-only`, якщо налаштовано remote.
-2. Створи гілку з конкретною метою: `fix/track-menu`, `feat/playlist-export` або `docs/setup`.
-3. Зроби зміни й перевірки відповідного рівня. Для Android-коду виконай `bash scripts/build.sh`; для взаємодії з UI додай перевірку на пристрої.
-4. Переглянь `git diff` і `git diff --cached`. У коміт мають входити тільки файли поточної задачі.
-5. Створи невеликий змістовний коміт: `fix: handle track taps`, `feat: add playlist export`, `docs: clarify SDK setup`.
-6. Відкрий pull request із поясненням поведінки до/після, результатами перевірок і відомими обмеженнями.
+Describe the problem and resulting behavior in each pull request. Preserve stored sources, favorites, playlists, downloads and queue state across upgrades. Add regression coverage for meaningful behavior changes; avoid tests that merely repeat the implementation.
 
-Не переписуй історію спільних гілок без узгодження. Зміни бібліотеки мають зберігати плейлисти, улюблене та офлайн-файли користувача.
+Run `bash scripts/build.sh` for Android changes. Release tooling also has `python3 scripts/test-release.py` and `python3 scripts/test-ci-signing.py`. Run `bash scripts/check-workflows.sh` for workflow changes, and stage intended files before `python3 scripts/check-repository.py`.
 
-## Перевірки
+CI builds the debug app, runs host-side tests and lint, and uploads short-lived development artifacts. Android instrumentation tests require a device or emulator; see [testing](docs/TESTING.md). Compiling a test does not mean it ran.
 
-- `bash scripts/test-core.sh` — core logic, Java syntax, XML і SQLite.
-- `python3 scripts/check-repository.py` — склад Git index перед публікацією.
-- `bash scripts/build.sh` — debug APK і Android Lint.
-- `bash gradlew --no-daemon :app:connectedDebugAndroidTest` — тести на під’єднаному пристрої.
+Keep repository documentation in English. The application's UI strings and code comments are a separate concern. Update feature documentation and the changelog when behavior changes; distinguish released features from planned work.
 
-Скомпільований тест не вважається виконаним. Якщо перевірку не вдалося запустити, зазнач це в описі зміни. Сценарії ручної перевірки — у [TESTING.md](docs/TESTING.md).
+## Security and releases
 
-## Документація та релізи
+Do not commit server credentials, keystores, password files, personal captures, SDKs, caches or APKs. New dependencies require a purpose and upstream license reference in [DEPENDENCIES.md](docs/DEPENDENCIES.md).
 
-Оновлюй документацію разом зі зміною поведінки. Користувацькі зміни занось у `CHANGELOG.md`. Номер версії змінюється при підготовці релізу, а не після кожного коміту. Debug APK призначений для тестування; реліз потребує окремого стабільного signing key та перевірки на пристроях.
+Pull requests must not receive signing credentials. Changes to workflows, Gradle configuration and release tooling need particular review because they affect distributed artifacts. CODEOWNERS identifies the maintainer; GitHub branch and environment protection must be configured separately to enforce reviews.
 
-Ключі, паролі, особисті адреси серверів, локальні логи, SDK, Gradle cache й APK не комітяться. Перед додаванням скриншотів перевір особисті дані в них. Нові залежності та їхні ліцензії потрібно описувати в `docs/DEPENDENCIES.md`.
+Official release signing uses the existing pinned certificate. Do not generate a replacement key or change the certificate pin to bypass an error. Publishing remains disabled until the maintainer explicitly enables it and configures the protected signing environment. Maintainer-specific key, backup and activation instructions are kept outside the repository.
+
+Use descriptive commits and do not rewrite shared history without agreement. Publishing or uploading signing secrets is a separate maintainer action, not part of a contribution build.

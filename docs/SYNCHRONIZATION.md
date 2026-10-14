@@ -1,55 +1,54 @@
-# Кешування та синхронізація
+# Subsonic synchronization and playback state
 
-## Перемикання композицій
+## Compatibility and endpoints
 
-Медіатека вже зберігається в SQLite; версія 0.6.0 додає кеш записів композицій і станів улюбленого в пам’яті. Дані джерел залишаються зашифрованими в Android Keystore-сховищі; повторні звернення під час відтворення використовують копії з пам’яті.
+The client uses the Subsonic protocol, not Navidrome-specific APIs. Requests advertise API version 1.16.1 and JSON responses, with username, random salt and an MD5 password-plus-salt token. Navidrome is the primary tested server. Other implementations must support the endpoints used below and remain best-effort.
 
-Натискання треку в тій самій черзі виконує seek до потрібного індексу, а не формує й передає всі MediaItem повторно. Склад черги зберігається при зміні timeline, позиція — окремо, раз на п’ять секунд; JSON і запис налаштувань виконуються у фоновому потоці. Відновлення великої черги також відбувається у фоні й не замінює вибір, який користувач уже зробив після запуску.
+| Purpose | Endpoints |
+|---|---|
+| Connection and catalog | `ping`, `getAlbumList2`, `getAlbum` |
+| Cover lookup and image | `getSong` when needed, `getCoverArt` |
+| Playback/download | `stream` with `format=raw` |
+| Track favorites | `getStarred2`, `star`, `unstar` |
+| Server playlists | `getPlaylists`, `getPlaylist`, `createPlaylist`, `updatePlaylist`, `deletePlaylist` |
+| Optional discovery | `getOpenSubsonicExtensions` |
 
-Плеєр повторно використовує CoverView та обкладинку, якщо композиції мають той самий cover ID. Влучання в кеш пам’яті відображається одразу. Оновлення обкладинки об’єднуються з інтервалом 300 мс, щоб швидка серія перемикань не завантажувала кожне проміжне зображення в GPU. При відкритому повноекранному плеєрі прихована бібліотека не малюється. Запит поточної обкладинки має окремий пріоритет від прокручування бібліотеки; скасовані запити без слухачів пропускаються. Межі кешу обкладинок: 32 МБ у пам’яті та 96 МБ на диску.
+OpenSubsonic discovery runs only when the server advertises support. Discovery errors fall back to baseline behavior. Discovery does not enable lyrics, API-key authentication or other unimplemented extensions. Debug-only `SELFoniumSubsonic` messages distinguish API/HTTP/network/response errors without source URLs or credentials.
 
-Для серверних аудіофайлів використовується Media3 SimpleCache з LRU-межею **192 МБ**. Після стабілізації поточної композиції фоновий запит підвантажує до **512 КБ початку наступної** з урахуванням shuffle. Програвання не чекає на зайняту ділянку кешу. Ключі враховують джерело, обліковий запис, композицію та метадані; випадковий salt Subsonic не змінює ключ. Resolver повідомляє початковий `selfonium://` URI, щоб тимчасові авторизовані URL не ставали перенаправленнями кешу.
+## Catalog
 
-Локальні файли, явні офлайн-копії та HLS/radio обходять цей аудіокеш. Він не замінює завантаження для офлайн-прослуховування: Android може очистити кеш. Поріг початку відтворення — 500 мс накопиченого аудіо, після повторної буферизації — 1500 мс; фоновий буфер підтримується в межах 15–45 секунд. Це не гарантія часу старту: мережа, сервер і декодер також впливають на затримку.
+Full synchronization reads album-list pages of 500 and fetches album contents in batches of at most three concurrent requests. Results retain server order. A failed album, repeated page, missing required container or incorrectly typed array aborts the snapshot before it reaches the library. A valid empty collection is accepted.
 
-## Улюблене Subsonic / Navidrome
+Catalog networking uses a separate executor from serialized favorite/playlist operations. Pruning retains downloads, favorited tracks, playlist entries and tracks with pending favorite actions. Retaining an entry does not make a deleted server file remotely playable.
 
-- Серверні позначки композицій надходять через `getStarred2`, локальні зміни — через `star` / `unstar`.
-- Серверна синхронізація виконується при відкритті застосунку, поверненні мережі, раз на хвилину у відкритому застосунку та при ручному оновленні джерела.
-- Натискання серця одразу змінює UI. SQLite зберігає бажаний стан у `favorite_outbox`; повторні зміни одного треку об’єднуються.
-- Запис видаляється лише після успішної відповіді сервера, якщо його revision та значення все ще збігаються з відправленими. Старий запит не підтверджує новішу зміну.
-- Без мережі черга переживає перезапуск. Повторне надсилання виконується при відновленні мережі, відкритті застосунку та через 30 секунд після невдачі.
-- Вхідний серверний знімок не змінює треки з невідправленою локальною дією. За відсутності такої дії стан сервера визначає улюблене.
-- Під час першої синхронізації вже наявні локальні лайки цього джерела надсилаються на сервер, після чого завантажуються серверні позначки. Лайки інших джерел не змінюються.
+There is no incremental catalog synchronization. A newest-albums list alone would miss removals and edits; an incremental design needs a separate change-detection strategy.
 
-Синхронізуються саме позначки **композицій**. Рейтинги, позначки альбомів/виконавців і scrobbling поки не реалізовані.
+## Favorites
 
-## Плейлисти
+Tapping a favorite updates the UI immediately. SQLite persists the desired value and revision in `favorite_outbox`; repeated actions on a track coalesce. A successful reply removes only the matching revision/value, so an older request cannot acknowledge a newer action.
 
-Серверні плейлисти завантажуються через `getPlaylists` / `getPlaylist` і відрізняються від локальних позначкою джерела. Ідентичність — пара `(source, remote_id)`, тому однакові ID або назви на різних серверах не зливаються. Порядок і повтори композицій із сервера зберігаються.
+Pending changes survive process restarts and are retried on app startup, connectivity restoration and after failed sends. Incoming snapshots exclude pending local actions. Foreground refresh is throttled to about one minute. On the first social synchronization, existing local track favorites for the source are seeded to the server before pulling its state.
 
-У формі створення можна обрати телефон або джерело Subsonic. Для власного серверного плейлиста доступні створення, перейменування, додавання й видалення композицій, видалення плейлиста. Додавання вже наявної композиції не створює ще один повтор. Для зміни плейлиста доступні лише треки того самого джерела. Чужі плейлисти з відомим іншим власником показуються для читання.
+Only track stars are synchronized. Ratings, album/artist stars and scrobbling are absent.
 
-Зміни серверних плейлистів **потребують мережі**. Локальна копія оновлюється після підтвердження й читання результату з сервера; невдала операція не видається за успішну локальну зміну. Перед видаленням композиції перевіряється поточний серверний індекс та ID. Якщо плейлист змінився, треба оновити джерело. Серверне API не має умовних операцій за версією; одночасне редагування між читанням і записом не можна повністю виключити. Після невизначеної відповіді на створення спочатку онови джерело перед повторенням.
+## Playlists
 
-Видалення серверного плейлиста потребує явного підтвердження в інтерфейсі. Зниклі із сервера плейлисти прибираються з локального серверного знімка; самостійні локальні плейлисти залишаються.
+Remote identity is `(source, remote_id)`; local playlists remain independent. Imported server order and duplicate entries are retained. Known other-owner playlists are read-only.
 
-Міграція SQLite v2 → v3 зберігає композиції, завантаження, історію, улюблене та локальні плейлисти. Старе обмеження `(playlist, track)` замінено на `(playlist, position)`, щоб імпортувати повтори із сервера.
+Owned lists can be created, renamed, edited and deleted while online. Adding a track already present does not add another duplicate. Tracks must belong to the same source. Local state changes after a successful server response; most edits read back the resulting list. Creation uses the returned playlist payload and requires its ID.
 
-## API
+Removal checks a freshly fetched index and track ID. The API has no version-conditional edit, so concurrent changes between read and write cannot be fully prevented. After an ambiguous creation failure, refresh before trying again to avoid creating a duplicate. There is no durable offline queue of playlist mutations.
 
-[OpenSubsonic getStarred2](https://opensubsonic.netlify.app/docs/endpoints/getstarred2/), [star](https://opensubsonic.netlify.app/docs/endpoints/star/), [createPlaylist](https://opensubsonic.netlify.app/docs/endpoints/createplaylist/), [updatePlaylist](https://opensubsonic.netlify.app/docs/endpoints/updateplaylist/).
+A successful list snapshot removes missing remote mappings while preserving independent local lists. SQLite migration from v2 to v3 preserves library state and changes playlist membership keys to support ordered repeats.
 
-## Каталог та відновлення після помилок
+## Artwork, audio cache and recovery
 
-Повне оновлення читає сторінки `getAlbumList2` по 500 альбомів та отримує `getAlbum` партіями максимум по три запити. Результати об’єднуються в порядку сервера. Помилка одного альбому, повтор сторінки або некоректний JSON перериває оновлення; частковий каталог не передається до SQLite і не використовується для видалення композицій. Порожній список є допустимим, але відсутній обов’язковий контейнер або поле масиву неправильного типу — помилка. Такі самі перевірки захищають вхідні лайки й плейлисти.
+Cover identifiers are opaque. A missing cover ID can be resolved with `getSong`; it is not inferred from the song ID. Artwork has a 32 MB memory cache and 96 MB disk limit, with priority for the active cover.
 
-Каталог має окремий executor: тривале сканування не займає чергу серверних лайків і змін плейлистів. Операції, які змінюють сервер, залишаються послідовними. Зниклі композиції з офлайн-файлом, лайком, записом у плейлисті або невідправленою дією зберігаються локально; онлайн-відтворення видаленого серверного файлу при цьому може бути недоступним.
+Remote audio uses a 192 MB LRU cache and cancelable prefetch of up to 512 KB from the next track. Local files, deliberate offline copies and radio/HLS bypass this cache. Stable cache keys exclude random authentication salts, and the resolver reports the original internal URI rather than persisting an authenticated stream URL as a cache redirect.
 
-Це повна синхронізація, а не інкрементальна: кількість запитів альбомів не зменшується. Інкрементальне оновлення потребує окремого протокольного механізму виявлення змін і перевірки видалень; список лише нових альбомів не може замінити повний каталог.
+Queue/index/position are saved together when the timeline changes, with additional position checkpoints on pause, seek, transitions and every five seconds. A force-stop can lose an unwritten checkpoint. Missing selected tracks are remapped to a surviving entry at position zero; startup does not autoplay.
 
-Debug-збірка записує категорію помилки discovery, кількість знайдених розширень та час/розмір успішного сканування в `SELFoniumSubsonic`. Ці повідомлення не містять URL, назв джерел, логінів, паролів чи токенів. Release-збірка не вмикає ці debug-повідомлення.
+After a terminal stream error, one Play action prepares a new attempt. Restored connectivity does not automatically start playback. Device checks must wait for the intended network to be ready; enabling the Wi-Fi radio alone does not establish DNS/server reachability.
 
-Черга, індекс і позиція записуються разом при зміні її складу. Позиція також зберігається при паузі, перемотуванні, переході між треками й періодично кожні п’ять секунд. Примусове завершення під час програвання може втратити останню незаписану позицію. Після перезапуску відновлюється призупинена черга; якщо вибраний трек видалений із бібліотеки, найближчий наявний починається з нуля.
-
-Після остаточної помилки потоку кнопка показує відтворення; один дотик повторно готує плеєр і запускає спробу. Автоматичного запуску при поверненні мережі немає. Офлайн-файл відкривається без сервера, а серверні плейлисти можна переглядати зі збереженого знімка; їх редагування все ще потребує мережі.
+Protocol references: [OpenSubsonic endpoints](https://opensubsonic.netlify.app/docs/), [extension discovery](https://opensubsonic.netlify.app/docs/endpoints/getopensubsonicextensions/), [playlist updates](https://opensubsonic.netlify.app/docs/endpoints/updateplaylist/).

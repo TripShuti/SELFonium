@@ -4,6 +4,8 @@
 
 ## 0.6.3
 
+- Fix a fixture-only concurrency counter race exposed by GitHub runners; retain the three-request limit and 3000-album ordering checks.
+
 - Package version 0.6.3 (versionCode 10) with the existing signing identity; music-player functionality is unchanged from 0.6.2.
 
 - Remove the cache-specific Android checker, custom SDK bootstrap and redundant release wrapper; use SDK tools, Gradle and the release CLI directly.

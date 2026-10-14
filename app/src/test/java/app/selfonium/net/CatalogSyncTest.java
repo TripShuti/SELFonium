@@ -63,6 +63,9 @@ public final class CatalogSyncTest {
                     default->throw new AssertionError(method);
                 }
                 byte[] bytes=new JSONObject().put("subsonic-response",response).toString().getBytes(StandardCharsets.UTF_8);
+                // Retire simulated server work before the client can consume the response
+                // and start its next request; finally can run after that on another CPU.
+                if(albumRequest){active.decrementAndGet();albumRequest=false;}
                 exchange.getResponseHeaders().set("Connection","close");exchange.sendResponseHeaders(200,bytes.length);exchange.getResponseBody().write(bytes);
             }catch(Exception failure){try{exchange.sendResponseHeaders(500,-1);}catch(Exception ignored){}}
             finally{if(albumRequest)active.decrementAndGet();exchange.close();}

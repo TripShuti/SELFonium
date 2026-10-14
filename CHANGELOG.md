@@ -4,6 +4,8 @@
 
 ## 0.6.2
 
+- Publish SELFonium-0.6.2.apk as a signed release build and update the direct installation link.
+
 - Rename the application protocol field to `subsonic`; add debug-only discovery diagnostics that distinguish API, HTTP, network and malformed-response failures without URLs or credentials.
 - Fetch albums in bounded batches of three, preserve server order and stop incomplete catalog snapshots from reaching the library. Keep catalog work separate from serialized favorite/playlist operations.
 - Reject malformed catalog, favorite and playlist arrays instead of treating them as empty snapshots.

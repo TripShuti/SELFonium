@@ -67,7 +67,7 @@ public final class UpdateManager {
         worker.execute(()->{
             try{
                 ReleaseInfo found=http.latest(operation);if(found!=null&&!newer(found.code,installedCode))found=null;
-                boolean keep=found!=null&&previous!=null&&found.sha256.equals(previous.sha256)&&verified.isFile();
+                boolean keep=found!=null&&previous!=null&&found.code==previous.code&&found.version.equals(previous.version)&&found.signer.equals(previous.signer)&&found.size==previous.size&&found.sha256.equals(previous.sha256)&&freshFile();
                 if(!keep)verified.delete();ReleaseInfo result=found;long checked=System.currentTimeMillis();
                 main.post(()->{
                     prefs.edit().putLong("last_success",checked).putLong("retry_at",0).putLong("cached_at",checked).putString("release",result==null?"":result.releaseJson).putString("manifest",result==null?"":result.manifestJson).apply();

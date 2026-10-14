@@ -19,7 +19,7 @@ print(f'PASS: {len(xml)} XML resources, manifest components and no billing permi
 
 assert 'android.permission.REQUEST_INSTALL_PACKAGES' in permissions
 provider = manifest.find('./application/provider')
-assert provider is not None and provider.get(ns + 'name') == 'androidx.core.content.FileProvider'
+assert provider is not None and provider.get(ns + 'name') == '.update.UpdateFileProvider'
 assert provider.get(ns + 'exported') == 'false' and provider.get(ns + 'grantUriPermissions') == 'true'
 assert provider.get(ns + 'authorities') == '${applicationId}.updates'
 paths = ET.parse(root / 'app/src/main/res/xml/update_paths.xml').getroot()

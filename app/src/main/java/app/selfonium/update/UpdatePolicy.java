@@ -16,7 +16,9 @@ public final class UpdatePolicy {
     }
     public static boolean due(long now,long attempted,long retryAt,boolean automatic){
         if(now<retryAt)return false;
-        return attempted==0||now<attempted||now-attempted>=(automatic?DAY:MANUAL_INTERVAL);
+        if(attempted==0)return true;
+        if(now<attempted)return !automatic;
+        return now-attempted>=(automatic?DAY:MANUAL_INTERVAL);
     }
     public static boolean newer(long offered,long installed){return offered>0&&offered>installed;}
     public static boolean compatible(Set<String> installed,Set<String> installedHistory,Set<String> offered,Set<String> offeredHistory,boolean rotation){

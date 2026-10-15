@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import app.selfonium.core.Track;
+import app.selfonium.core.LibraryFilter;
 import app.selfonium.core.ServerPlaylist;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,6 +71,14 @@ public final class Library extends SQLiteOpenHelper {
     public List<Track> favorites() { return query("SELECT * FROM tracks WHERE favorite=1 ORDER BY title COLLATE NOCASE",null); }
     public List<Track> offlineTracks() { return query("SELECT * FROM tracks WHERE offline<>'' ORDER BY title COLLATE NOCASE",null); }
     public List<Track> playlist(long id) { return query("SELECT t.* FROM tracks t JOIN playlist_tracks p ON p.track=t.id WHERE p.playlist=? ORDER BY p.position",new String[]{Long.toString(id)}); }
+    public boolean playlistMatchesSource(Playlist playlist,String filter){
+        String value=LibraryFilter.normalize(filter);if(value.isEmpty())return true;
+        if(playlist.remote())return LibraryFilter.matches(value,playlist.source());
+        if(playlist.count()==0)return value.equals(LibraryFilter.LOCAL);
+        String selection=value.equals(LibraryFilter.LOCAL)?"t.source IN ('device','files')":"t.source=?";
+        String[] args=value.equals(LibraryFilter.LOCAL)?new String[]{Long.toString(playlist.id())}:new String[]{Long.toString(playlist.id()),value};
+        try(Cursor cursor=getReadableDatabase().rawQuery("SELECT 1 FROM playlist_tracks p JOIN tracks t ON t.id=p.track WHERE p.playlist=? AND "+selection+" LIMIT 1",args)){return cursor.moveToFirst();}
+    }
     private List<Track> query(String sql,String[] args) {
         List<Track> tracks=new ArrayList<>();
         try(Cursor c=getReadableDatabase().rawQuery(sql,args)) {while(c.moveToNext()){Track track=new Track(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getString(4),c.getString(5),c.getString(6),c.getLong(7),c.getInt(8),c.getString(c.getColumnIndexOrThrow("artwork")));

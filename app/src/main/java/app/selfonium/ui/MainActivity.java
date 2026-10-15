@@ -33,6 +33,7 @@ import androidx.media3.session.SessionToken;
 import com.google.common.util.concurrent.ListenableFuture;
 import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Protocol;
+import app.selfonium.core.LibraryFilter;
 import app.selfonium.core.Source;
 import app.selfonium.core.Track;
 import app.selfonium.data.LocalMusic;
@@ -47,14 +48,14 @@ public final class MainActivity extends Activity {
     private final java.util.function.Consumer<app.selfonium.update.UpdateManager.State> updatesChanged=this::onUpdateState;
     private SelfoniumApp app;private MediaController player;private ListenableFuture<MediaController> controllerFuture;
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
-    private LinearLayout root,mini,playerCard;private IconButton backButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
+    private LinearLayout root,mini,playerCard;private IconButton backButton,sourceButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
     private TextView playerTitle,playerArtist,playerAlbum,playerTime,playerRemaining;private SeekBar playerSeek;private FrameLayout playerCover;private CoverView playerArtwork;private long activePlaylist=-1;
     private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog,appearanceDialog,storageDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
     private final Deque<Runnable> detailHistory=new ArrayDeque<>();private Runnable detailPage;
     private LinearLayout navigation;private String libraryCategory="Альбоми";private int tab;private List<Track> library=new ArrayList<>();private boolean syncing;
     private final java.util.function.Consumer<String> socialChanged=status->{
         if(isDestroyed())return;if(!status.isEmpty())message(status);updatePlayer();
-        if(!detailShowing&&(section.equals("playlists")||category.equals("Улюблене")))reload();
+        if(!detailShowing&&tab==1&&(category.equals("Плейлисти")||category.equals("Улюблене")))reload();
     };
     private String completedDownloads="";
     private final Runnable offlineChanged=()->{String signature=app.downloads.entries().stream().filter(e->e.status()==DownloadRepository.Status.COMPLETE).map(e->e.id()).collect(java.util.stream.Collectors.joining("\n"));if(!signature.equals(completedDownloads)){completedDownloads=signature;if(tab==1&&category.equals("Офлайн"))reload();}};
@@ -66,7 +67,7 @@ public final class MainActivity extends Activity {
     @Override protected void attachBaseContext(android.content.Context base){super.attachBaseContext(AppLanguage.wrap(base));}
     @Override public void onCreate(Bundle state){
         super.onCreate(state);Ui.load(this);app=(SelfoniumApp)getApplication();settings=getSharedPreferences("player",MODE_PRIVATE);
-        if(state!=null){tab=state.getInt("tab");category=state.getString("category","Композиції");section=state.getString("section","");query=state.getString("query","");libraryCategory=state.getString("libraryCategory","Альбоми");}
+        if(state!=null){tab=state.getInt("tab");category=state.getString("category","Композиції");section=state.getString("section","");query=state.getString("query","");libraryCategory=state.getString("libraryCategory","Альбоми");sourceFilter=LibraryFilter.normalize(state.getString("sourceFilter",""));if(tab==1&&(section.equals("category")||section.equals("playlists"))){libraryCategory=category;section="";}}
         build();reload();
         controllerFuture=new MediaController.Builder(this,new SessionToken(this,new ComponentName(this,PlaybackService.class))).buildAsync();
         controllerFuture.addListener(()->{
@@ -81,7 +82,7 @@ public final class MainActivity extends Activity {
     @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(storageDialog!=null)storageDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
     @Override protected void onResume(){super.onResume();if(updateDialog!=null)updateDialog.onResume();}
     @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&app!=null)updatesChanged.accept(app.updates.state());}
-    @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);state.putString("sourceFilter",sourceFilter);super.onSaveInstanceState(state);}
     private boolean landscape(){return getResources().getConfiguration().orientation==2;}
     private int dp(float n){return Ui.dp(this,n);}
     private IconButton icon(String name,String description,Runnable action){return new IconButton(this,name,description,action);}
@@ -91,8 +92,8 @@ public final class MainActivity extends Activity {
         backButton=icon("back",Texts.get(MainActivity.this,R.string.ui_back),this::goBack);top.addView(backButton,new LinearLayout.LayoutParams(dp(48),dp(48)));backButton.setVisibility(View.GONE);
         LinearLayout titles=Ui.column(this);Ui.pad(titles,8,0);heading=Ui.title(this,"SELFonium",20);heading.setSingleLine(true);heading.setEllipsize(android.text.TextUtils.TruncateAt.END);titles.addView(heading);
         subtitle=Ui.text(this,"",12,Ui.MUTED);subtitle.setVisibility(View.GONE);titles.addView(subtitle);top.addView(titles,new LinearLayout.LayoutParams(0,-2,1));
-        top.addView(icon("filter",Texts.get(MainActivity.this,R.string.ui_filter_sources),this::filterSources),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        top.addView(icon("more",Texts.get(MainActivity.this,R.string.ui_menu),this::mainMenu),new LinearLayout.LayoutParams(dp(48),dp(48)));root.addView(top);
+        sourceButton=icon("sources",Texts.get(MainActivity.this,R.string.ui_filter_sources),this::filterSources);top.addView(sourceButton,new LinearLayout.LayoutParams(dp(48),dp(48)));
+        root.addView(top);
         content=new FrameLayout(this);root.addView(content,new LinearLayout.LayoutParams(-1,0,1));
         playerCard=Ui.column(this);playerCard.setVisibility(View.GONE);playerCard.setBackground(Ui.shape(this,Ui.RAISED,12));playerCard.setClipToOutline(true);
         mini=Ui.row(this);Ui.pad(mini,8,landscape()?2:6);miniCover=new CoverView(this);miniCover.urgent();mini.addView(miniCover,new LinearLayout.LayoutParams(dp(40),dp(40)));miniCover.setOnClickListener(v->showPlayer());
@@ -112,19 +113,19 @@ public final class MainActivity extends Activity {
     private void hideKeyboard(){View focus=getCurrentFocus();if(focus!=null){((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(focus.getWindowToken(),0);focus.clearFocus();}}
     private void goBack(){hideKeyboard();if(detailShowing){if(!detailHistory.isEmpty()){detailShowing=false;detailHistory.removeLast().run();}else render();return;}if(!section.isEmpty()){section="";render();return;}if(tab!=0){navigate(0);return;}super.onBackPressed();}
     @Override public void onBackPressed(){goBack();}
-    private void mainMenu(){new AlertDialog.Builder(this).setItems(new String[]{Texts.get(MainActivity.this,R.string.ui_playback_queue),Texts.get(MainActivity.this,R.string.ui_music_sources),Texts.get(MainActivity.this,R.string.ui_equalizer),Texts.get(MainActivity.this,R.string.ui_settings)},(d,at)->{switch(at){case 0->queue();case 1->openSources();case 2->showEqualizer();case 3->navigate(3);}}).show();}
     private void filterSources(){
-        List<String> ids=new ArrayList<>(),names=new ArrayList<>();ids.add("");names.add(Texts.get(MainActivity.this,R.string.ui_all_sources));ids.add("device");names.add(Texts.get(MainActivity.this,R.string.ui_on_device));ids.add("files");names.add(Texts.get(MainActivity.this,R.string.ui_imported_files));ids.add("radio");names.add(Texts.get(this,R.string.ui_radio));
+        List<String> ids=new ArrayList<>(),names=new ArrayList<>();ids.add("");names.add(Texts.get(MainActivity.this,R.string.ui_all_sources));ids.add(LibraryFilter.LOCAL);names.add(getString(R.string.ui_local_files));ids.add("radio");names.add(Texts.get(this,R.string.ui_radio));
         try{for(Source source:app.sources.all()){ids.add(source.id);names.add(source.name);}}catch(Exception ignored){}
         new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_library_sources)).setSingleChoiceItems(names.toArray(new String[0]),Math.max(0,ids.indexOf(sourceFilter)),(d,at)->{sourceFilter=ids.get(at);d.dismiss();render();}).setNegativeButton(Texts.get(MainActivity.this,R.string.ui_cancel),null).show();
     }
-    private List<Track> visibleLibrary(){return sourceFilter.isEmpty()?library:matching(t->t.sourceId.equals(sourceFilter));}
+    private List<Track> visibleLibrary(){return sourceFilter.isEmpty()?library:matching(t->LibraryFilter.matches(sourceFilter,t.sourceId));}
     private void reload(){app.io.execute(()->{List<Track> tracks=app.library.all();app.main.post(()->{if(isDestroyed())return;library=tracks;render();});});}
     private void render(){
         if(content==null)return;activePlaylist=-1;content.removeAllViews();detailShowing=false;detailHistory.clear();detailPage=null;heading.setText(new String[]{"SELFonium",Texts.get(MainActivity.this,R.string.ui_library),Texts.get(MainActivity.this,R.string.ui_search),Texts.get(MainActivity.this,R.string.ui_settings)}[tab]);
+        sourceButton.setVisibility(tab==3?View.GONE:View.VISIBLE);sourceButton.active(!sourceFilter.isEmpty());sourceButton.setContentDescription(getString(R.string.ui_library_sources)+": "+(sourceFilter.isEmpty()?getString(R.string.ui_all_sources):sourceFilter.equals(LibraryFilter.LOCAL)?getString(R.string.ui_local_files):sourceName(sourceFilter)));
         subtitle.setText(Texts.get(MainActivity.this,R.string.ui_syncing));subtitle.setVisibility(syncing?View.VISIBLE:View.GONE);backButton.setVisibility(section.isEmpty()?View.GONE:View.VISIBLE);
         for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?Ui.TONAL:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
-        switch(tab){case 0->home();case 1->{if(section.equals("category"))libraryPage();else if(section.equals("playlists"))playlists();else libraryRoot();}case 2->libraryPage();case 3->{if(section.equals("sources"))sources();else settingsPage();}}
+        switch(tab){case 0->home();case 1->libraryRoot();case 2->libraryPage();case 3->{if(section.equals("sources"))sources();else settingsPage();}}
     }
     private LinearLayout scroll(){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);LinearLayout column=Ui.column(this);Ui.pad(column,16,8);scroll.addView(column);content.addView(scroll);return column;}
     private void label(LinearLayout parent,String text){TextView label=Ui.title(this,Texts.known(this,text),18);Ui.pad(label,0,12);parent.addView(label);}
@@ -134,9 +135,9 @@ public final class MainActivity extends Activity {
         LinearLayout actions=Ui.row(this);homeAction(actions,"shuffle",Texts.get(MainActivity.this,R.string.ui_track_mix),()->{settings.edit().putBoolean("shuffle",true).apply();play(visible,new Random().nextInt(visible.size()));});
         homeAction(actions,"album",Texts.get(MainActivity.this,R.string.ui_album_mix),()->{Track album=visible.get(new Random().nextInt(visible.size()));settings.edit().putBoolean("shuffle",false).apply();play(albumTracks(album),0);});
         homeAction(actions,"queue",Texts.get(MainActivity.this,R.string.ui_queue),this::queue);column.addView(actions);Ui.space(column,12);
-        List<Track> favorites=app.library.favorites();if(!sourceFilter.isEmpty())favorites.removeIf(t->!t.sourceId.equals(sourceFilter));
+        List<Track> favorites=app.library.favorites();if(!sourceFilter.isEmpty())favorites.removeIf(t->!LibraryFilter.matches(sourceFilter,t.sourceId));
         if(!favorites.isEmpty()){sectionHeader(column,Texts.get(MainActivity.this,R.string.ui_favorite_tracks),()->openCategory("Улюблене"));albumShelf(column,favorites,true);}
-        List<Track> recent=app.library.recent();if(!sourceFilter.isEmpty())recent.removeIf(t->!t.sourceId.equals(sourceFilter));
+        List<Track> recent=app.library.recent();if(!sourceFilter.isEmpty())recent.removeIf(t->!LibraryFilter.matches(sourceFilter,t.sourceId));
         if(!recent.isEmpty()){sectionHeader(column,Texts.get(MainActivity.this,R.string.ui_recently_played),()->showTracks(Texts.get(MainActivity.this,R.string.ui_recently_played),recent));for(int i=0;i<Math.min(3,recent.size());i++)column.addView(trackRow(recent,i));}
         LinkedHashMap<String,Track> albums=new LinkedHashMap<>();for(Track t:visible)albums.putIfAbsent(t.sourceId+"\u0000"+t.artist+"\u0000"+t.album,t);
         sectionHeader(column,"Альбоми",()->openCategory("Альбоми"));albumShelf(column,new ArrayList<>(albums.values()),false);
@@ -150,15 +151,13 @@ public final class MainActivity extends Activity {
         TextView title=Ui.text(this,name,11,Ui.TEXT);title.setGravity(Gravity.CENTER);title.setMaxLines(2);tile.addView(title,new LinearLayout.LayoutParams(-1,-2));tile.setOnClickListener(v->action.run());
         LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(0,dp(64),1);size.setMargins(0,0,dp(6),0);row.addView(tile,size);
     }
-    private void openCategory(String name){hideKeyboard();tab=1;category=name;section=name.equals("Плейлисти")?"playlists":"category";query="";render();}
+    private void openCategory(String name){hideKeyboard();tab=1;category=name;libraryCategory=name;section="";query="";render();}
     private void openSources(){tab=3;section="sources";query="";render();}
-    private void libraryRoot(){category=libraryCategory;libraryPage();}
-    private void categoryTabs(LinearLayout page,boolean primary){
-        LinearLayout choices=Ui.row(this);for(String name:new String[]{"Альбоми","Виконавці","Композиції"}){
-            TextView chip=Ui.button(this,Texts.known(this,name),category.equals(name),()->{category=name;if(tab==1)libraryCategory=name;render();});Ui.pad(chip,4,8);chip.setSingleLine(true);chip.setEllipsize(android.text.TextUtils.TruncateAt.END);chip.setAutoSizeTextTypeUniformWithConfiguration(10,13,1,android.util.TypedValue.COMPLEX_UNIT_SP);chip.setSelected(category.equals(name));LinearLayout.LayoutParams size=new LinearLayout.LayoutParams(0,dp(48),1);size.rightMargin=name.equals("Композиції")?0:dp(6);choices.addView(chip,size);
-        }page.addView(choices);Ui.space(page,8);
+    private void libraryRoot(){category=libraryCategory;if(category.equals("Плейлисти"))playlists();else libraryPage();}
+    private void categoryTabs(LinearLayout page,boolean all){
+        page.addView(new LibraryTabs(this,category,all,key->{if(tab==1)openCategory(key);else{category=key;render();}}),new LinearLayout.LayoutParams(-1,-2));Ui.space(page,8);
     }
-    private void librarySections(){String[] names={"Улюблене","Плейлисти","Офлайн","Файли","Радіо"};new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_library_sections)).setItems(Arrays.stream(names).map(n->Texts.known(this,n)).toArray(String[]::new),(d,at)->openCategory(names[at])).show();}
+    private int gridColumns(){return settings.getInt("gridColumns",landscape()?3:2)==3?3:2;}
     private View emptyState(String symbol,String title,String summary,String action,Runnable run){
         LinearLayout box=Ui.column(this);box.setGravity(Gravity.CENTER);Ui.pad(box,24,32);
         IconButton glyph=icon(symbol,title,()->{});glyph.active(true);glyph.setFocusable(false);glyph.setClickable(false);glyph.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);box.addView(glyph,new LinearLayout.LayoutParams(dp(48),dp(48)));Ui.space(box,12);
@@ -188,13 +187,12 @@ public final class MainActivity extends Activity {
             search=input(Texts.get(MainActivity.this,R.string.ui_tracks_albums_artists),false);search.setBackground(null);search.setText(query);search.setImeOptions(android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH);field.addView(search,new LinearLayout.LayoutParams(0,dp(48),1));
             EditText editor=search;field.addView(icon("close",Texts.get(MainActivity.this,R.string.ui_clear_search),()->editor.setText("")),new LinearLayout.LayoutParams(dp(48),dp(48)));page.addView(field);Ui.space(page,8);
             search.setOnEditorActionListener((v,action,event)->{if(action==android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH){rememberSearch();hideKeyboard();return true;}return false;});
-            categoryTabs(categoryBar,true);
+            categoryTabs(categoryBar,false);
         }else if(rootLibrary){categoryTabs(categoryBar,true);}
         LinearLayout tools=Ui.row(this);TextView count=Ui.text(this,"",12,Ui.MUTED);tools.addView(count,new LinearLayout.LayoutParams(0,-2,1));
-        if(category.equals("Альбоми")||category.equals("Виконавці"))tools.addView(icon("library",Texts.get(MainActivity.this,R.string.ui_change_column_count),()->{settings.edit().putInt("gridColumns",settings.getInt("gridColumns",2)==2?3:2).apply();render();}),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        if(rootLibrary){TextView more=Ui.button(this,Texts.get(MainActivity.this,R.string.ui_more),false,this::librarySections);Ui.pad(more,10,6);more.setTextSize(12);more.setContentDescription(Texts.get(MainActivity.this,R.string.ui_more_library_sections));tools.addView(more,new LinearLayout.LayoutParams(-2,dp(44)));}
+        if(category.equals("Альбоми")||category.equals("Виконавці"))tools.addView(icon(gridColumns()==2?"grid2":"grid3",Texts.get(MainActivity.this,R.string.ui_change_column_count)+": "+Texts.quantity(this,R.plurals.column_count,gridColumns()==2?3:2),()->{settings.edit().putInt("gridColumns",gridColumns()==2?3:2).apply();render();}),new LinearLayout.LayoutParams(dp(48),dp(48)));
         tools.addView(icon("sort",Texts.get(MainActivity.this,R.string.ui_sort),()->new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_sort)).setSingleChoiceItems(new String[]{Texts.get(MainActivity.this,R.string.ui_by_title),Texts.get(MainActivity.this,R.string.ui_by_artist),Texts.get(MainActivity.this,R.string.ui_by_album),Texts.get(MainActivity.this,R.string.ui_by_duration)},sortOrder,(d,at)->{sortOrder=at;d.dismiss();render();}).show()),new LinearLayout.LayoutParams(dp(48),dp(48)));
-        if(landscape()&&(searching||rootLibrary)){LinearLayout bar=Ui.row(this);bar.addView(categoryBar,new LinearLayout.LayoutParams(0,-2,1));bar.addView(tools,new LinearLayout.LayoutParams(-2,dp(48)));page.addView(bar);}else{page.addView(categoryBar);page.addView(tools);}
+        if(landscape()&&searching){LinearLayout bar=Ui.row(this);bar.addView(categoryBar,new LinearLayout.LayoutParams(0,-2,1));bar.addView(tools,new LinearLayout.LayoutParams(-2,dp(48)));page.addView(bar);}else{page.addView(categoryBar);page.addView(tools);}
         FrameLayout results=new FrameLayout(this);page.addView(results,new LinearLayout.LayoutParams(-1,0,1));content.addView(page);
         Runnable update=()->{
             results.removeAllViews();String needle=query.trim().toLowerCase(Locale.ROOT);
@@ -203,7 +201,7 @@ public final class MainActivity extends Activity {
                     TextView entry=Ui.button(this,previous,false,()->{EditText field=(EditText)findSearchField(page);if(field!=null){field.setText(previous);field.setSelection(previous.length());hideKeyboard();}});prompt.addView(entry);Ui.space(prompt,6);}
                 ScrollView recentScroll=new ScrollView(this);recentScroll.addView(prompt);results.addView(recentScroll);return;}
             List<Track> base=category.equals("Улюблене")?app.library.favorites():category.equals("Офлайн")?app.library.offlineTracks():visibleLibrary();
-            List<Track> tracks=new ArrayList<>();for(Track t:base){boolean type=(!category.equals("Файли")||t.sourceId.equals("device")||t.sourceId.equals("files"))&&(!category.equals("Радіо")||t.sourceId.equals("radio"));if(type&&(sourceFilter.isEmpty()||sourceFilter.equals(t.sourceId))&&(t.title+" "+t.artist+" "+t.album).toLowerCase(Locale.ROOT).contains(needle))tracks.add(t);}
+            List<Track> tracks=new ArrayList<>();for(Track t:base){boolean type=(!category.equals("Файли")||t.sourceId.equals("device")||t.sourceId.equals("files"))&&(!category.equals("Радіо")||t.sourceId.equals("radio"));if(type&&LibraryFilter.matches(sourceFilter,t.sourceId)&&(t.title+" "+t.artist+" "+t.album).toLowerCase(Locale.ROOT).contains(needle))tracks.add(t);}
             Comparator<Track> order=switch(sortOrder){case 1->Comparator.comparing(t->t.artist,String.CASE_INSENSITIVE_ORDER);case 2->Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number);case 3->Comparator.comparingLong(t->t.durationMs);default->Comparator.comparing(t->t.title,String.CASE_INSENSITIVE_ORDER);};tracks.sort(order);count.setText(Ui.tracks(MainActivity.this,tracks.size()));if(category.equals("Офлайн")){List<Track> shown=new ArrayList<>(tracks);app.io.execute(()->{long bytes=0;for(Track t:shown){File file=new File(app.library.offline(t.id));if(app.offline.files.owns(file)&&file.isFile())bytes+=file.length();}long size=bytes;app.main.post(()->{if(count.isAttachedToWindow())count.setText(getString(R.string.storage_offline_summary,Ui.tracks(this,shown.size()),android.text.format.Formatter.formatShortFileSize(this,size)));});});}
             if(tracks.isEmpty()){results.addView(emptyState(searching?"search":"music",searching?Texts.get(MainActivity.this,R.string.ui_nothing_found):Texts.get(MainActivity.this,R.string.ui_nothing_here_yet),searching?Texts.get(MainActivity.this,R.string.ui_try_another_search_or_change_the_source):Texts.get(MainActivity.this,R.string.ui_add_music_or_change_the_source_filter),searching?"":Texts.get(MainActivity.this,R.string.ui_music_sources),searching?null:this::openSources));return;}
             if(category.equals("Альбоми")||category.equals("Виконавці")){
@@ -213,7 +211,7 @@ public final class MainActivity extends Activity {
                 if(sortOrder==1)namesOrder=Comparator.comparing(k->groups.get(k).get(0).artist,String.CASE_INSENSITIVE_ORDER);
                 else if(sortOrder==3)namesOrder=Comparator.comparingLong(k->groups.get(k).stream().mapToLong(t->t.durationMs).sum());names.sort(namesOrder);
                 count.setText(albums?Texts.quantity(MainActivity.this,R.plurals.album_count,names.size()):Texts.quantity(MainActivity.this,R.plurals.artist_count,names.size()));
-                GridView grid=new GridView(this);grid.setNumColumns(getResources().getConfiguration().orientation==2?3:settings.getInt("gridColumns",2));grid.setHorizontalSpacing(dp(12));grid.setVerticalSpacing(dp(16));grid.setPadding(0,dp(4),0,dp(16));grid.setClipToPadding(false);grid.setSelector(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
+                GridView grid=new GridView(this);grid.setNumColumns(gridColumns());grid.setHorizontalSpacing(dp(12));grid.setVerticalSpacing(dp(16));grid.setPadding(0,dp(4),0,dp(16));grid.setClipToPadding(false);grid.setSelector(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));
                 grid.setAdapter(new BaseAdapter(){public int getCount(){return names.size();}public Object getItem(int at){return names.get(at);}public long getItemId(int at){return at;}
                     public View getView(int at,View recycled,ViewGroup parent){List<Track> group=groups.get(names.get(at));Track track=group.get(0);LinearLayout card;
                         if(landscape()){
@@ -237,7 +235,7 @@ public final class MainActivity extends Activity {
             public View getView(int at,View old,ViewGroup parent){TrackRowView row=old instanceof TrackRowView?(TrackRowView)old:new TrackRowView(MainActivity.this);row.bind(tracks.get(at),()->play(tracks,at),ignored->trackMenu(tracks.get(at),at));row.albumPosition(album?at+1:0);row.nowPlaying(tracks.get(at).id.equals(miniId));return row;}});return list;
     }
     private void showAlbum(Track album){List<Track> tracks=albumTracks(album);showCollection(Ui.album(MainActivity.this,album.album),tracks,true,false);}
-    private void showArtist(String artist){List<Track> tracks=matching(t->t.artist.equals(artist)&&(sourceFilter.isEmpty()||sourceFilter.equals(t.sourceId)));tracks.sort(Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number));showCollection(artist,tracks,false,true);}
+    private void showArtist(String artist){List<Track> tracks=matching(t->t.artist.equals(artist)&&LibraryFilter.matches(sourceFilter,t.sourceId));tracks.sort(Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number));showCollection(artist,tracks,false,true);}
     private void showTracks(String name,List<Track> tracks){showCollection(name,tracks,false,false);}
     private void showCollection(String name,List<Track> tracks,boolean album,boolean artist){
         activePlaylist=-1;hideKeyboard();if(detailShowing&&detailPage!=null)detailHistory.addLast(detailPage);detailPage=()->showCollection(name,tracks,album,artist);detailShowing=true;backButton.setVisibility(View.VISIBLE);content.removeAllViews();heading.setText(album?Texts.get(MainActivity.this,R.string.ui_album_157):artist?Texts.get(MainActivity.this,R.string.ui_artist_158):name);subtitle.setVisibility(View.GONE);
@@ -283,10 +281,12 @@ public final class MainActivity extends Activity {
     private void sheetAction(LinearLayout page,Dialog sheet,String symbol,String title,Runnable action){
         Runnable run=()->{sheet.dismiss();action.run();};LinearLayout row=Ui.row(this);row.setBackground(Ui.ripple(this,Ui.SURFACE,10));row.addView(icon(symbol,title,run),new LinearLayout.LayoutParams(dp(48),dp(48)));TextView label=Ui.text(this,title,14,Ui.TEXT);Ui.pad(label,8,0);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));row.setOnClickListener(v->run.run());page.addView(row,new LinearLayout.LayoutParams(-1,dp(48)));
     }
-    private String sourceName(String id){if(id.equals("device"))return Texts.get(MainActivity.this,R.string.ui_on_device);if(id.equals("files"))return Texts.get(MainActivity.this,R.string.ui_imported_files);if(id.equals("radio"))return Texts.get(this,R.string.ui_radio);try{Source s=app.sources.get(id);return s==null?Texts.get(MainActivity.this,R.string.ui_removed_source):s.name;}catch(Exception e){return Texts.get(MainActivity.this,R.string.ui_source_176);}}
+    private String sourceName(String id){if(LibraryFilter.local(id))return getString(R.string.ui_local_files);if(id.equals("radio"))return Texts.get(this,R.string.ui_radio);try{Source s=app.sources.get(id);return s==null?Texts.get(MainActivity.this,R.string.ui_removed_source):s.name;}catch(Exception e){return Texts.get(MainActivity.this,R.string.ui_source_176);}}
     private void download(Track track){if(track.sourceId.equals("radio")){message(Texts.get(MainActivity.this,R.string.ui_a_radio_stream_has_no_end_and));return;}notificationPermission();app.downloads.enqueue(List.of(track.id));message(Texts.get(MainActivity.this,R.string.ui_added_to_downloads));}
     private void playlists(){
-        heading.setText(Texts.get(this,R.string.ui_playlists));LinearLayout column=scroll();List<Library.Playlist> entries=app.library.playlistInfo();
+        LinearLayout page=Ui.column(this);Ui.pad(page,16,4);categoryTabs(page,true);
+        ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);LinearLayout column=Ui.column(this);Ui.pad(column,0,8);scroll.addView(column);page.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));content.addView(page);
+        List<Library.Playlist> entries=app.library.playlistInfo();entries.removeIf(playlist->!app.library.playlistMatchesSource(playlist,sourceFilter));
         settingRow(column,"plus",Texts.get(MainActivity.this,R.string.ui_create_playlist),Texts.get(MainActivity.this,R.string.ui_on_this_phone_or_a_subsonic_server),()->newPlaylist(null));
         if(entries.isEmpty())column.addView(emptyState("queue",Texts.get(MainActivity.this,R.string.ui_your_collections),Texts.get(MainActivity.this,R.string.ui_refresh_a_subsonic_source_to_import_server),"",null));
         for(Library.Playlist playlist:entries){Track first=app.library.playlistFirst(playlist.id());LinearLayout card=Ui.row(this);Ui.pad(card,0,8);
@@ -338,7 +338,7 @@ public final class MainActivity extends Activity {
     private void sources(){
         heading.setText(Texts.get(MainActivity.this,R.string.ui_music_sources));LinearLayout column=scroll();if(app.social.pendingCount>0)settingRow(column,"refresh",Texts.get(MainActivity.this,R.string.ui_pending_sync),Texts.get(this,R.string.pending_favorites,app.social.pendingCount),app.social::requestFlush);
         try{List<Source> sources=app.sources.all();if(!sources.isEmpty())label(column,Texts.get(MainActivity.this,R.string.ui_media_servers));for(Source source:sources){LinearLayout card=Ui.row(this);card.setBackground(Ui.ripple(this,Ui.SURFACE,16));Ui.pad(card,4,10);card.addView(icon("server",source.name,()->showTracks(source.name,matching(t->source.id.equals(t.sourceId)))),new LinearLayout.LayoutParams(dp(48),dp(48)));LinearLayout text=Ui.column(this);Ui.pad(text,8,0);text.addView(Ui.title(this,source.name,16));Ui.space(text,5);text.addView(Ui.text(this,source.type.name()+" · "+Ui.tracks(MainActivity.this,matching(t->source.id.equals(t.sourceId)).size()),12,Ui.MUTED));card.addView(text,new LinearLayout.LayoutParams(0,-2,1));card.addView(icon("refresh",Texts.get(MainActivity.this,R.string.ui_sync)+source.name,()->sync(source)),new LinearLayout.LayoutParams(dp(48),dp(48)));card.addView(icon("more",Texts.get(MainActivity.this,R.string.ui_source_menu),()->sourceActions(source)),new LinearLayout.LayoutParams(dp(48),dp(48)));card.setOnClickListener(v->showTracks(source.name,matching(t->source.id.equals(t.sourceId))));column.addView(card);Ui.space(column,8);}}catch(Exception e){message(e.getMessage());}
-        settingRow(column,"plus",Texts.get(MainActivity.this,R.string.ui_add_subsonic_server),Texts.get(MainActivity.this,R.string.ui_subsonic_opensubsonic_tested_with_navidrome),()->sourceDialog(null));label(column,Texts.get(MainActivity.this,R.string.ui_on_device));settingRow(column,"music",Texts.get(MainActivity.this,R.string.ui_scan_music),Texts.get(MainActivity.this,R.string.ui_audio_files_in_the_android_media_library),this::scan);settingRow(column,"folder",Texts.get(MainActivity.this,R.string.ui_add_files),Texts.get(MainActivity.this,R.string.ui_select_with_the_file_picker),this::importFiles);settingRow(column,"radio",Texts.get(MainActivity.this,R.string.ui_add_radio_station),Texts.get(MainActivity.this,R.string.ui_direct_audio_stream_url),this::radio);
+        settingRow(column,"plus",Texts.get(MainActivity.this,R.string.ui_add_subsonic_server),Texts.get(MainActivity.this,R.string.ui_subsonic_opensubsonic_tested_with_navidrome),()->sourceDialog(null));label(column,getString(R.string.ui_local_files));settingRow(column,"music",Texts.get(MainActivity.this,R.string.ui_scan_music),Texts.get(MainActivity.this,R.string.ui_audio_files_in_the_android_media_library),this::scan);settingRow(column,"folder",Texts.get(MainActivity.this,R.string.ui_add_files),Texts.get(MainActivity.this,R.string.ui_select_with_the_file_picker),this::importFiles);settingRow(column,"radio",Texts.get(MainActivity.this,R.string.ui_add_radio_station),Texts.get(MainActivity.this,R.string.ui_direct_audio_stream_url),this::radio);
     }
     private void sourceActions(Source source){new AlertDialog.Builder(this).setTitle(source.name).setItems(new String[]{Texts.get(MainActivity.this,R.string.ui_source_tracks),Texts.get(MainActivity.this,R.string.ui_edit),Texts.get(MainActivity.this,R.string.ui_delete_source)},(d,at)->{if(at==0)showTracks(source.name,matching(t->source.id.equals(t.sourceId)));else if(at==1)sourceDialog(source);else new AlertDialog.Builder(this).setMessage(Texts.get(MainActivity.this,R.string.ui_delete_this_source_its_entries_and_offline)).setNegativeButton(Texts.get(MainActivity.this,R.string.ui_cancel),null).setPositiveButton(Texts.get(MainActivity.this,R.string.ui_delete_86),(x,y)->{for(Track t:matching(t->source.id.equals(t.sourceId))){String path=app.library.offline(t.id);if(!path.isEmpty())new File(path).delete();}app.sources.remove(source.id);app.library.removeSource(source.id);reload();}).show();}).show();}
     private void sourceDialog(Source existing){
@@ -434,7 +434,7 @@ public final class MainActivity extends Activity {
         String selected=AppLanguage.selected(this);int current=Arrays.asList(tags).indexOf(selected);
         new AlertDialog.Builder(this).setTitle(R.string.language_title).setSingleChoiceItems(names,Math.max(0,current),(dialog,index)->{dialog.dismiss();AppLanguage.apply(this,tags[index]);}).setNegativeButton(R.string.ui_cancel,null).show();
     }
-    private void settingsPage(){LinearLayout column=scroll();label(column,Texts.get(MainActivity.this,R.string.ui_personalization));settingRow(column,"settings",getString(R.string.language_title),getString(R.string.language_summary),this::chooseLanguage);settingRow(column,"settings",Texts.get(MainActivity.this,R.string.ui_appearance),Texts.get(MainActivity.this,R.string.ui_accent_color_background_and_cover_grid),()->appearanceDialog=AppearanceDialog.show(this));label(column,Texts.get(MainActivity.this,R.string.ui_media_library));settingRow(column,"server",Texts.get(MainActivity.this,R.string.ui_music_sources),Texts.get(MainActivity.this,R.string.ui_servers_files_and_sync),this::openSources);settingRow(column,"download",Texts.get(this,R.string.ui_offline),Texts.get(MainActivity.this,R.string.ui_downloaded_tracks),()->openCategory("Офлайн"));
+    private void settingsPage(){LinearLayout column=scroll();label(column,Texts.get(MainActivity.this,R.string.ui_personalization));settingRow(column,"language",getString(R.string.language_title),getString(R.string.language_summary),this::chooseLanguage);settingRow(column,"palette",Texts.get(MainActivity.this,R.string.ui_appearance),Texts.get(MainActivity.this,R.string.ui_accent_color_background_and_cover_grid),()->appearanceDialog=AppearanceDialog.show(this));label(column,Texts.get(MainActivity.this,R.string.ui_media_library));settingRow(column,"server",Texts.get(MainActivity.this,R.string.ui_music_sources),Texts.get(MainActivity.this,R.string.ui_servers_files_and_sync),this::openSources);settingRow(column,"download",Texts.get(this,R.string.ui_offline),Texts.get(MainActivity.this,R.string.ui_downloaded_tracks),()->openCategory("Офлайн"));
         label(column,Texts.get(MainActivity.this,R.string.ui_playback));settingRow(column,"equalizer",Texts.get(MainActivity.this,R.string.ui_equalizer),Texts.get(MainActivity.this,R.string.ui_bands_gain_and_presets),this::showEqualizer);settingRow(column,"play",Texts.get(MainActivity.this,R.string.ui_speed),settings.getFloat("speed",1)+"×",()->{String[] speeds={"0.75×","1×","1.25×","1.5×","2×"};float[] values={.75f,1f,1.25f,1.5f,2f};new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_playback_speed)).setItems(speeds,(d,at)->{settings.edit().putFloat("speed",values[at]).apply();render();}).show();});settingRow(column,"clock",Texts.get(MainActivity.this,R.string.ui_sleep_timer),Texts.get(MainActivity.this,R.string.ui_stop_playback_after_a_timer),this::sleep);
         label(column,getString(R.string.storage_title));settingRow(column,"folder",getString(R.string.storage_title),getString(R.string.storage_summary),()->storageDialog=StorageDialog.show(this,()->openCategory("Офлайн")));
         label(column,getString(R.string.updates_title));settingRow(column,"download",getString(R.string.updates_settings),getString(R.string.updates_summary),this::showUpdates);

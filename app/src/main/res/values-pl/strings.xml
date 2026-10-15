@@ -266,7 +266,7 @@
     <string name="ui_60_minutes">"60 minut"</string>
     <string name="ui_90_minutes">"90 minut"</string>
     <string name="ui_personalization">"Personalizacja"</string>
-    <string name="ui_accent_color_background_and_cover_grid">"Kolor akcentu, tło i siatka okładek"</string>
+    <string name="ui_accent_color_background_and_cover_grid">"Kolor akcentu i tło"</string>
     <string name="ui_media_library">"Biblioteka multimediów"</string>
     <string name="ui_servers_files_and_sync">"Serwery, pliki i synchronizacja"</string>
     <string name="ui_downloaded_tracks">"Pobrane utwory"</string>
@@ -357,4 +357,5 @@
         <item>"Reggae"</item>
         <item>"Techno"</item>
     </string-array>
+    <string name="ui_local_files">"Pliki lokalne"</string>
 </resources>

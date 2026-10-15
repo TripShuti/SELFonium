@@ -266,7 +266,7 @@
     <string name="ui_60_minutes">"60 minutes"</string>
     <string name="ui_90_minutes">"90 minutes"</string>
     <string name="ui_personalization">"Personalization"</string>
-    <string name="ui_accent_color_background_and_cover_grid">"Accent color, background and cover grid"</string>
+    <string name="ui_accent_color_background_and_cover_grid">"Accent color and background"</string>
     <string name="ui_media_library">"Media library"</string>
     <string name="ui_servers_files_and_sync">"Servers, files and sync"</string>
     <string name="ui_downloaded_tracks">"Downloaded tracks"</string>
@@ -349,4 +349,5 @@
         <item>"Reggae"</item>
         <item>"Techno"</item>
     </string-array>
+    <string name="ui_local_files">"Local files"</string>
 </resources>

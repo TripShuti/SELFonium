@@ -42,6 +42,10 @@ final class IconButton extends View {
             case "repeat","repeat1"->{path.moveTo(4,10);path.lineTo(4,6);path.lineTo(20,6);path.lineTo(17,3);c.drawPath(path,paint);path.reset();path.moveTo(20,14);path.lineTo(20,18);path.lineTo(4,18);path.lineTo(7,21);c.drawPath(path,paint);if(icon.equals("repeat1")){line(c,12,10,12,14);}}
             case "heart"->{path.moveTo(12,21);path.cubicTo(-5,10,5,-1,12,7);path.cubicTo(19,-1,29,10,12,21);if(isSelected())paint.setStyle(Paint.Style.FILL);c.drawPath(path,paint);}
             case "equalizer"->{for(int i=0;i<3;i++){float x=5+i*7,y=i==1?15:8;line(c,x,3,x,y-3);line(c,x,y+3,x,21);c.drawCircle(x,y,2.5f,paint);}}
+            case "language"->{c.drawCircle(12,12,9,paint);c.drawOval(8,3,16,21,paint);line(c,3,12,21,12);c.drawArc(3,6,21,14,0,180,false,paint);}
+            case "palette"->{path.moveTo(12,3);path.cubicTo(6,3,3,7,3,12);path.cubicTo(3,18,7,21,12,21);path.cubicTo(16,21,16,17,14,15);path.cubicTo(13,13,15,11,18,12);path.cubicTo(23,13,23,3,12,3);path.close();c.drawPath(path,paint);paint.setStyle(Paint.Style.FILL);c.drawCircle(7,10,1.3f,paint);c.drawCircle(10,6.8f,1.3f,paint);c.drawCircle(15,7,1.3f,paint);c.drawCircle(7,15,1.3f,paint);}
+            case "sources"->{path.moveTo(12,3);path.lineTo(22,8);path.lineTo(12,13);path.lineTo(2,8);path.close();c.drawPath(path,paint);path.reset();path.moveTo(2,12);path.lineTo(12,17);path.lineTo(22,12);c.drawPath(path,paint);path.reset();path.moveTo(2,16);path.lineTo(12,21);path.lineTo(22,16);c.drawPath(path,paint);}
+            case "grid2","grid3"->{int columns=icon.equals("grid2")?2:3;float gap=2,cell=(18-gap*(columns-1))/columns;for(int y=0;y<2;y++)for(int x=0;x<columns;x++){float left=3+x*(cell+gap),top=4+y*9;c.drawRoundRect(left,top,left+cell,top+7,1,1,paint);}}
             case "settings"->{c.drawCircle(12,12,7,paint);c.drawCircle(12,12,2.5f,paint);for(int i=0;i<8;i++){c.save();c.rotate(i*45,12,12);line(c,12,2,12,5);c.restore();}}
             case "search"->{c.drawCircle(10,10,6,paint);line(c,15,15,21,21);}
             case "remove"->{line(c,5,12,19,12);}

@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Put all eight library sections in one horizontally scrolling row, including the playlists page, and reveal the selected tab automatically.
+- Combine scanned and manually added music under a Local files source filter, preserving stored source identities and server/offline distinctions.
+- Remove the redundant global overflow menu and the appearance-screen column selector; keep the grid switch in the library and honor it in both orientations.
+- Add distinct sources, language, appearance and grid icons, selected-filter feedback, and restore the source filter after activity recreation.
+
 ## 0.6.5
 
 - Add Settings → Storage with private-data usage, device free space, offline totals and separate cache/temporary-file maintenance.

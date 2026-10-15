@@ -59,7 +59,9 @@ Device administrators, OEM restrictions and Play Protect may block or inspect in
 
 These host tests exercise production parsers, transport and streaming logic. Certificate-policy fixtures use synthetic fingerprints; they do not execute Android PackageManager's APK verifier, FileProvider, lifecycle callbacks or the system installer. CI builds/lints the Android app. See [TESTING.md](TESTING.md) for the general test entry points.
 
-Before distributing the first updater release, manually check Android 8.0/8.1 and a modern Android device:
+The maintainer reported successful update discovery, download and installation on the test phone on 2026-10-15. This confirms that happy path on that device, not every Android version or failure case.
+
+For further releases, check remaining scenarios on Android 8.0/8.1 and a modern Android device:
 
 - Automatic checking on foreground return, disabled checking, manual throttling, persisted last-check time and one reminder per version.
 - Theme/accent/AMOLED, rotation, small screens, TalkBack, long notes and scrolling while music plays.

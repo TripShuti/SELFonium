@@ -59,7 +59,10 @@ for path in (root/'app/src/main/java').rglob('*.java'):
     for name in re.findall(r'R\.string\.(\w+)', path.read_text()):
         require(name in string_names, f'Missing R.string.{name}: {path.name}')
 main = (root/'app/src/main/java/app/selfonium/ui/MainActivity.java').read_text()
-require('openCategory(names[at])' in main, 'Navigation must use stable internal keys')
+tabs=(root/'app/src/main/java/app/selfonium/ui/LibraryTabs.java').read_text()
+sections=re.search(r'SECTIONS=\{([^}]+)\}',tabs)[1]
+legacy_keys={item.text.strip(chr(34)) for item in keys}
+require(all(key in legacy_keys for key in re.findall(r'"([^"]+)"',sections)), 'Library tabs require translated stable navigation keys')
 eq = (root/'app/src/main/java/app/selfonium/ui/EqualizerDialog.java').read_text()
 require('apply(EqualizerPresets.gains(at),0,EqualizerPresets.NAMES[at])' in eq, 'Preset storage must use stable keys')
 require('if(Build.VERSION.SDK_INT>=33)' in (root/'app/src/main/java/app/selfonium/locale/AppLanguage.java').read_text(), 'Framework locale APIs must be guarded')

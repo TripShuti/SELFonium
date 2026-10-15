@@ -22,6 +22,10 @@ Server favorites sync both ways and retain pending changes offline. Server playl
 
 Offline downloads save whole files before marking them available. Streaming cache and next-track prefetch are separate from deliberate downloads. Android can remove cached data.
 
+Development navigation changes (not included in 0.6.5) put Albums, Artists, Tracks, Favorites, Playlists, Offline, Files and Radio in one horizontally scrolling row. The selected section stays visible and playlists retain the same fixed tab row. Search keeps its three result categories. The global overflow shortcut menu has been removed; settings remain in bottom navigation, with track and player action menus retained.
+
+The source filter groups MediaStore-scanned music and manually selected documents as **Local files**, without moving files or changing stored source IDs. Downloaded/cached server tracks retain their server source; Offline remains a separate availability view. The same grouping applies to home, favorites, history, search and artist browsing. Server playlists match their server; local playlists match contained track sources, with empty local lists visible under Local files. Filtering a playlist list does not rewrite the playlist's contents. The source filter survives activity recreation and its icon indicates an active selection.
+
 ## Storage management
 
 Settings → Storage shows downloaded music and track count, streaming audio, artwork, database, temporary/update files, other private app data and device free space. The overview measures private data, not the installed APK size or other apps. Measurements run on a separate worker and refresh while the screen is open. The Offline tab also shows the size of the listed tracks.
@@ -38,7 +42,7 @@ Storage management is introduced in version 0.6.5. See [testing](TESTING.md#stor
 
 ## Interface and audio
 
-Version 0.6.4 includes English, Ukrainian, Polish, German, French and Spanish. The app follows the device language by default (English fallback); Settings → Language selects an override. Android 13 and later also expose these languages in system app settings. Appearance settings provide accent colors, a custom HEX accent, an AMOLED background and two/three-column cover grids. Portrait and landscape players use adaptive layouts.
+Version 0.6.4 includes English, Ukrainian, Polish, German, French and Spanish. The app follows the device language by default (English fallback); Settings → Language selects an override. Android 13 and later also expose these languages in system app settings. Appearance settings provide accent colors, a custom HEX accent and an AMOLED background. The development version keeps two/three-column selection only in the library grid toolbar; changing appearance no longer overwrites that selection. The grid switch works in both orientations. Portrait and landscape players use adaptive layouts.
 
 The [graphic equalizer](EQUALIZER.md) has ten fixed bands, preamp, 18 built-in presets, saved presets and automatic headroom. It processes this app's PCM16 output. PEQ, AutoEQ import, system-wide equalization, encoded passthrough, audio offload and bit-perfect output are not available.
 

@@ -59,6 +59,15 @@ public final class OfflineStoreTest extends InstrumentationTestCase {
         offline.remove(local.id);DownloadRepository interrupted=new DownloadRepository(app);assertEquals(DownloadRepository.Status.FAILED,interrupted.entries().get(0).status());assertEquals(DownloadRepository.Error.INTERRUPTED,interrupted.entries().get(0).error());
         context.getSharedPreferences("download_queue",0).edit().clear().commit();
     }
+    public void testPlaylistSourceGroupingKeepsMixedListsIntact(){
+        Track local=new Track("device:one","device","one","Local","Artist","Album","",1000,1);library.merge("device",List.of(local),false);Track remote=add("server:one");
+        long empty=library.createPlaylist("Empty"),mixed=library.createPlaylist("Mixed");library.addToPlaylist(mixed,local.id);library.addToPlaylist(mixed,remote.id);
+        for(Library.Playlist playlist:library.playlistInfo()){
+            if(playlist.id()==empty){assertTrue(library.playlistMatchesSource(playlist,LibraryFilter.LOCAL));assertFalse(library.playlistMatchesSource(playlist,"fixture"));}
+            if(playlist.id()==mixed){assertTrue(library.playlistMatchesSource(playlist,LibraryFilter.LOCAL));assertTrue(library.playlistMatchesSource(playlist,"fixture"));assertFalse(library.playlistMatchesSource(playlist,"other"));}
+        }
+        assertEquals(2,library.playlist(mixed).size());
+    }
     public void testLegacyDownloadCheckPreservesValidFile()throws Exception{
         add("legacy");File file=offline.target("legacy");Files.write(file.toPath(),new byte[]{1});library.offline("legacy",file.getAbsolutePath());assertTrue(offline.verify().damaged().isEmpty());assertTrue(file.exists());
     }

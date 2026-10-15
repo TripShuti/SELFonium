@@ -7,14 +7,12 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.graphics.Color;
-import android.view.Gravity;
 import android.widget.*;
-import android.view.View;
 
 /** Preview is local until Apply. Recreating the activity leaves Media3 playback running. */
 final class AppearanceDialog {
     static Dialog show(Activity activity){AppearanceDialog screen=new AppearanceDialog(activity);screen.open();return screen.dialog;}
-    private final Activity activity;private final Dialog dialog;private int accent;private TextView preview,colorLabel;private Switch oled;private RadioGroup columns;private int twoId,threeId;
+    private final Activity activity;private final Dialog dialog;private int accent;private TextView preview,colorLabel;private Switch oled;
     private AppearanceDialog(Activity activity){this.activity=activity;dialog=Ui.screen(activity);accent=activity.getSharedPreferences("appearance",0).getInt("accent",Ui.DEFAULT_ACCENT);}
     private int dp(int n){return Ui.dp(activity,n);}
     private void open(){
@@ -26,9 +24,8 @@ final class AppearanceDialog {
         colorLabel=Ui.button(activity,"",false,this::customColor);colorLabel.setContentDescription(Texts.get(activity,R.string.ui_custom_accent_color));page.addView(colorLabel);Ui.space(page,16);
         preview=Ui.button(activity,Texts.get(activity,R.string.ui_selected_button_preview),true,()->{});preview.setClickable(false);page.addView(preview);Ui.space(page,24);
         page.addView(Ui.title(activity,Texts.get(activity,R.string.ui_background),18));oled=new Switch(activity);oled.setText(Texts.get(activity,R.string.ui_amoled_black_background));oled.setTextColor(Ui.TEXT);oled.setMinHeight(dp(56));Ui.tint(oled);oled.setChecked(activity.getSharedPreferences("appearance",0).getBoolean("oled",false));page.addView(oled);Ui.space(page,16);
-        page.addView(Ui.title(activity,Texts.get(activity,R.string.ui_cover_columns),18));columns=new RadioGroup(activity);columns.setOrientation(LinearLayout.HORIZONTAL);int current=activity.getSharedPreferences("player",0).getInt("gridColumns",2);for(int count:new int[]{2,3}){RadioButton button=new RadioButton(activity);int id=View.generateViewId();if(count==2)twoId=id;else threeId=id;button.setId(id);button.setText(Texts.quantity(activity,R.plurals.column_count,count));button.setTextColor(Ui.TEXT);Ui.tint(button);button.setMinHeight(dp(48));columns.addView(button,new RadioGroup.LayoutParams(0,-2,1));}columns.check(current==2?twoId:threeId);page.addView(columns);Ui.space(page,24);
-        page.addView(Ui.button(activity,Texts.get(activity,R.string.ui_apply),true,()->{activity.getSharedPreferences("appearance",0).edit().putInt("accent",accent).putBoolean("oled",oled.isChecked()).apply();activity.getSharedPreferences("player",0).edit().putInt("gridColumns",columns.getCheckedRadioButtonId()==twoId?2:3).apply();dialog.dismiss();activity.recreate();}));Ui.space(page,8);
-        page.addView(Ui.button(activity,Texts.get(activity,R.string.ui_restore_default_appearance),false,()->{accent=Ui.DEFAULT_ACCENT;oled.setChecked(false);columns.check(twoId);preview();}));Ui.space(page,20);preview();dialog.setContentView(scroll);dialog.show();dialog.getWindow().setLayout(-1,-1);
+        page.addView(Ui.button(activity,Texts.get(activity,R.string.ui_apply),true,()->{activity.getSharedPreferences("appearance",0).edit().putInt("accent",accent).putBoolean("oled",oled.isChecked()).apply();dialog.dismiss();activity.recreate();}));Ui.space(page,8);
+        page.addView(Ui.button(activity,Texts.get(activity,R.string.ui_restore_default_appearance),false,()->{accent=Ui.DEFAULT_ACCENT;oled.setChecked(false);preview();}));Ui.space(page,20);preview();dialog.setContentView(scroll);dialog.show();dialog.getWindow().setLayout(-1,-1);
     }
     private void preview(){colorLabel.setText(String.format(java.util.Locale.ROOT,Texts.get(activity,R.string.ui_custom_color_06x),accent&0xFFFFFF));preview.setBackground(Ui.shape(activity,accent,12));preview.setTextColor(Ui.luminance(accent)>.179?0xFF111318:0xFFFFFFFF);}
     private void customColor(){

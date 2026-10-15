@@ -4,7 +4,7 @@ Use the existing Java, Android Views and Media3 architecture unless a change req
 
 ## Changes and validation
 
-Describe the problem and resulting behavior in each pull request. Preserve stored sources, favorites, playlists, downloads and queue state across upgrades. Add regression coverage for meaningful behavior changes; avoid tests that merely repeat the implementation.
+Describe the problem and resulting behavior in each pull request. Preserve stored sources, favorites, playlists, downloads, queue state and pending synchronization records across upgrades. Add regression coverage for meaningful behavior changes; avoid tests that merely repeat the implementation.
 
 Run `bash scripts/build.sh` for Android changes. Release tooling also has `python3 scripts/test-release.py` and `python3 scripts/test-ci-signing.py`. Run `bash scripts/check-workflows.sh` for workflow changes, and stage intended files before `python3 scripts/check-repository.py`.
 
@@ -18,13 +18,13 @@ Do not commit server credentials, keystores, password files, personal captures, 
 
 Pull requests must not receive signing credentials. Changes to workflows, Gradle configuration and release tooling need particular review because they affect distributed artifacts. CODEOWNERS identifies the maintainer; GitHub branch and environment protection must be configured separately to enforce reviews.
 
-Official release signing uses the existing pinned certificate. Do not generate a replacement key or change the certificate pin to bypass an error. Publishing remains disabled until the maintainer explicitly enables it and configures the protected signing environment. Maintainer-specific key, backup and activation instructions are kept outside the repository.
+Official release signing uses the existing pinned certificate. Do not generate a replacement key or change the certificate pin to bypass an error. Official tag releases use the active GitHub release workflow, gated by a repository setting and protected signing-environment approval. Manual workflow dispatch validates an unsigned build and does not publish. Maintainer-specific key, backup and activation instructions are kept outside the repository.
 
 Use descriptive commits and do not rewrite shared history without agreement. Publishing or uploading signing secrets is a separate maintainer action, not part of a contribution build.
 
 ## Localization
 
-English resources in `app/src/main/res/values/strings.xml` and `updates.xml` are the fallback. Ukrainian, Polish, German, French and Spanish use the matching `values-<language>` folders. Keep resource names and format placeholders consistent; use Android quantity resources for counts. `bash scripts/test-core.sh` checks resource parity, placeholders, plural coverage and language selection without a device.
+English resources in `app/src/main/res/values/` are the fallback, including `strings.xml`, `updates.xml`, `storage.xml` and `scrobbling.xml`. Ukrainian, Polish, German, French and Spanish use the matching `values-<language>` folders. Keep resource names and format placeholders consistent; use Android quantity resources for counts. `bash scripts/test-core.sh` checks resource parity, placeholders, plural coverage and language selection without a device.
 
 `AppLanguage` uses framework per-app locales on Android 13+ and a private preference plus activity recreation on Android 8–12. Declare supported languages in `xml/locales_config.xml` and `LanguagePolicy`. The language picker uses native language names.
 

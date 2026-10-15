@@ -62,9 +62,9 @@ Protocol references: [scrobble](https://opensubsonic.netlify.app/docs/endpoints/
 
 ## Artwork, audio cache and recovery
 
-Cover identifiers are opaque. A missing cover ID can be resolved with `getSong`; it is not inferred from the song ID. Artwork has a 32 MB memory cache and 96 MB disk limit, with priority for the active cover.
+Cover identifiers are opaque. A missing cover ID can be resolved with `getSong`; it is not inferred from the song ID. Artwork has a 32 MiB memory cache and 96 MiB disk limit, with priority for the active cover.
 
-Remote audio defaults to a configurable 192 MiB LRU cache and optional cancelable prefetch of up to 512 KB from the next track. Local files, deliberate offline copies and radio/HLS bypass this cache. Stable cache keys exclude random authentication salts, and the resolver reports the original internal URI rather than persisting an authenticated stream URL as a cache redirect.
+Remote audio defaults to a configurable 192 MiB LRU cache and optional cancelable prefetch of up to 512 KiB from the next track. Local files, deliberate offline copies and radio/HLS bypass this cache. Stable cache keys exclude random authentication salts, and the resolver reports the original internal URI rather than persisting an authenticated stream URL as a cache redirect.
 
 Queue/index/position are saved together when the timeline changes, with additional position checkpoints on pause, seek, transitions and every five seconds. A force-stop can lose an unwritten checkpoint. Missing selected tracks are remapped to a surviving entry at position zero; startup does not autoplay.
 

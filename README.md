@@ -9,12 +9,13 @@ Development and device testing focus on **Navidrome**. Other compatible Subsonic
 - Browse albums, artists and tracks; search your library and keep local playlists, favorites and listening history.
 - Sync Subsonic track favorites and server playlists. Offline favorite changes are saved and retried when connectivity returns.
 - Play local files, download tracks for offline listening and open direct radio streams.
+- View storage usage, manage downloads and cache limits, and check or clean up offline copies.
 - Manage the playback queue, shuffle, repeat, playback speed and sleep timer.
 - Adjust a ten-band graphic equalizer with preamp, built-in presets and saved custom settings.
 - Customize the accent color, AMOLED background and album-grid density.
 - Check stable GitHub Releases in settings, download verified updates and open Android’s installer.
 
-Server playlist editing requires a connection. OpenSubsonic extension discovery is implemented; features such as synchronized lyrics, scrobbling and API-key authentication are not. See [features and limitations](docs/FEATURES.md).
+Server playlist editing requires a connection. OpenSubsonic extension discovery is implemented; synchronized lyrics and API-key authentication are not implemented. See [features and limitations](docs/FEATURES.md).
 
 ## Screenshots
 
@@ -30,7 +31,7 @@ Download the APK from [GitHub Releases](https://github.com/TripShuti/SELFonium/r
 
 Requirements: **Android 8.0 or later (API 26)**. Remote playback needs a compatible server account and network access; downloaded and local files can play offline. Grant audio-library and notification permissions when needed.
 
-The development branch includes an [in-app updater](docs/UPDATES.md); the published 0.6.3 APK does not contain it yet. Install updates over the existing app to retain data. Official updates must use the same signing identity. Local and CI debug builds can have a different signature and are intended for development.
+Version 0.6.4 and later include an [in-app updater](docs/UPDATES.md) under Settings → Updates. Install updates over the existing app to retain data. Official updates must use the same signing identity. Local and CI debug builds can have a different signature and are intended for development.
 
 To connect a server, open settings using the gear icon, find the music sources section and add a Subsonic server with its base URL, username and password. Do not append `/rest` to the URL. Sync the source, then select a track from the library.
 
@@ -47,6 +48,8 @@ bash scripts/build.sh
 The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See [building](docs/BUILDING.md) for SDK setup, release outputs and signing requirements.
 
 ## Development
+
+Unreleased work adds simplified library navigation and server listening reports with offline scrobble delivery. These changes are not included in the published 0.6.5 APK; see the [changelog](CHANGELOG.md#unreleased) and [feature status](docs/FEATURES.md).
 
 [Contributing](CONTRIBUTING.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md)
 

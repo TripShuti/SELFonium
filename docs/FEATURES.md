@@ -8,7 +8,7 @@
 | Local audio | Android MediaStore scan, document-picker import, embedded artwork | No recursive folder scanner |
 | Radio | Direct HTTP(S) audio streams and `.m3u8` HLS URLs | No station directory or M3U/PLS playlist resolution |
 
-Only Subsonic/OpenSubsonic is supported as a remote library API. OpenSubsonic extension names and versions are discovered when advertised, but optional extension features are not implemented merely because discovery succeeds. API-key authentication, ratings, album/artist stars and lyrics are not implemented. Development builds add server listening reports and a bounded offline scrobble queue; this is not in 0.6.5. [SYNCHRONIZATION.md](SYNCHRONIZATION.md) lists the endpoints and behavior.
+Only Subsonic/OpenSubsonic is supported as a remote library API. OpenSubsonic extension names and versions are discovered when advertised, but optional extension features are not implemented merely because discovery succeeds. API-key authentication, ratings, album/artist stars and lyrics are not implemented. Version 0.6.6 adds server listening reports and a bounded offline scrobble queue. [SYNCHRONIZATION.md](SYNCHRONIZATION.md) lists the endpoints and behavior.
 
 Retired source records remain encrypted and hidden after upgrades. Their stored library entries and downloaded files are retained; their removed online connectors cannot play remote files.
 
@@ -22,9 +22,9 @@ Server favorites sync both ways and retain pending changes offline. Server playl
 
 Offline downloads save whole files before marking them available. Streaming cache and next-track prefetch are separate from deliberate downloads. Android can remove cached data.
 
-Development navigation changes (not included in 0.6.5) put Albums, Artists, Tracks, Favorites, Playlists, Offline, Files and Radio in one horizontally scrolling row. The selected section stays visible and playlists retain the same fixed tab row. Search keeps its three result categories. The global overflow shortcut menu has been removed; settings remain in bottom navigation, with track and player action menus retained.
+Navigation changes in 0.6.6 put Albums, Artists, Tracks, Favorites, Playlists, Offline, Files and Radio in one horizontally scrolling row. The selected section stays visible and playlists retain the same fixed tab row. Search keeps its three result categories. The global overflow shortcut menu has been removed; settings remain in bottom navigation, with track and player action menus retained.
 
-In the development version, the source filter groups MediaStore-scanned music and manually selected documents as **Local files**, without moving files or changing stored source IDs. Downloaded/cached server tracks retain their server source; Offline remains a separate availability view. The same grouping applies to home, favorites, history, search and artist browsing. Server playlists match their server; local playlists match contained track sources, with empty local lists visible under Local files. Filtering a playlist list does not rewrite the playlist's contents. The source filter survives activity recreation and its icon indicates an active selection.
+In 0.6.6, the source filter groups MediaStore-scanned music and manually selected documents as **Local files**, without moving files or changing stored source IDs. Downloaded/cached server tracks retain their server source; Offline remains a separate availability view. The same grouping applies to home, favorites, history, search and artist browsing. Server playlists match their server; local playlists match contained track sources, with empty local lists visible under Local files. Filtering a playlist list does not rewrite the playlist's contents. The source filter survives activity recreation and its icon indicates an active selection.
 
 ## Storage management
 
@@ -42,7 +42,7 @@ Storage management is introduced in version 0.6.5. See [testing](TESTING.md#stor
 
 ## Interface and audio
 
-Version 0.6.4 includes English, Ukrainian, Polish, German, French and Spanish. The app follows the device language by default (English fallback); Settings → Language selects an override. Android 13 and later also expose these languages in system app settings. Appearance settings provide accent colors, a custom HEX accent and an AMOLED background. The development version keeps two/three-column selection only in the library grid toolbar; changing appearance no longer overwrites that selection. The grid switch works in both orientations. Portrait and landscape players use adaptive layouts.
+Version 0.6.4 includes English, Ukrainian, Polish, German, French and Spanish. The app follows the device language by default (English fallback); Settings → Language selects an override. Android 13 and later also expose these languages in system app settings. Appearance settings provide accent colors, a custom HEX accent and an AMOLED background. Version 0.6.6 keeps two/three-column selection only in the library grid toolbar; changing appearance no longer overwrites that selection. The grid switch works in both orientations. Portrait and landscape players use adaptive layouts.
 
 The [graphic equalizer](EQUALIZER.md) has ten fixed bands, preamp, 18 built-in presets, saved presets and automatic headroom. It processes this app's PCM16 output. PEQ, AutoEQ import, system-wide equalization, encoded passthrough, audio offload and bit-perfect output are not available.
 

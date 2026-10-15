@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.6
+
 - Add Subsonic now-playing notifications and qualified scrobbles, with optional OpenSubsonic playback timelines using client-controlled counting.
 - Count actual active listening time, preserve session submission markers across restarts, and queue offline server listens with original timestamps.
 - Bound unsent listens to 10,000 entries/90 days; add reporting controls, pending count, retry and queue clearing in all six UI languages.

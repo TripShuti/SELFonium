@@ -49,7 +49,7 @@ The debug APK is written to `app/build/outputs/apk/debug/app-debug.apk`. See [bu
 
 ## Development
 
-Unreleased work adds simplified library navigation and server listening reports with offline scrobble delivery. These changes are not included in the published 0.6.5 APK; see the [changelog](CHANGELOG.md#unreleased) and [feature status](docs/FEATURES.md).
+Version 0.6.6 adds simplified library navigation and server listening reports with offline scrobble delivery. These changes are absent from 0.6.5 and earlier; see the [changelog](CHANGELOG.md#066) and [feature status](docs/FEATURES.md).
 
 [Contributing](CONTRIBUTING.md) · [Testing](docs/TESTING.md) · [Roadmap](docs/ROADMAP.md) · [Changelog](CHANGELOG.md)
 

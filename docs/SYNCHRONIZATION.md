@@ -11,7 +11,7 @@ The client uses the Subsonic protocol, not Navidrome-specific APIs. Requests adv
 | Playback/download | `stream` with `format=raw` |
 | Track favorites | `getStarred2`, `star`, `unstar` |
 | Server playlists | `getPlaylists`, `getPlaylist`, `createPlaylist`, `updatePlaylist`, `deletePlaylist` |
-| Listening reports (development) | `scrobble`; optional `reportPlayback` |
+| Listening reports (0.6.6) | `scrobble`; optional `reportPlayback` |
 | Optional discovery | `getOpenSubsonicExtensions` |
 
 OpenSubsonic discovery runs only when the server advertises support. Discovery errors fall back to baseline behavior. Discovery does not enable lyrics, API-key authentication or other unimplemented extensions. Debug-only `SELFoniumSubsonic` messages distinguish API/HTTP/network/response errors without source URLs or credentials.
@@ -42,9 +42,9 @@ Removal checks a freshly fetched index and track ID. The API has no version-cond
 
 A successful list snapshot removes missing remote mappings while preserving independent local lists. SQLite migration from v2 to v3 preserves library state and changes playlist membership keys to support ordered repeats.
 
-## Listening reports (development)
+## Listening reports (0.6.6)
 
-This is not included in the published 0.6.5 APK. Settings → Listening reports enables server reporting by default and shows pending listens, manual retry and queue clearing. Disabling reporting cancels requests and clears unsent records and the listening checkpoint; it does not delete local history or previously submitted server records. Requests go only to the configured Subsonic source. The server's own scrobbler handles external services, with no Last.fm/ListenBrainz credentials or SDK in SELFonium.
+Listening reports require 0.6.6 or later. Settings → Listening reports enables server reporting by default and shows pending listens, manual retry and queue clearing. Disabling reporting cancels requests and clears unsent records and the listening checkpoint; it does not delete local history or previously submitted server records. Requests go only to the configured Subsonic source. The server's own scrobbler handles external services, with no Last.fm/ListenBrainz credentials or SDK in SELFonium.
 
 A session accumulates monotonic elapsed time while Media3 reports active playback. Pauses, buffering and seek jumps do not add listening time; playback speed does not multiply that clock. A listen qualifies after half the known duration or four minutes, whichever is earlier. Unknown-duration media is not submitted until duration is known. A repeat or replay after an ended item starts a new session; pause/resume and seeking within the same item retain the session. Downloaded/cached server tracks retain server IDs and use the same policy; local files and radio are excluded.
 

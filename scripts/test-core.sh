@@ -9,6 +9,7 @@ trap 'rm -rf "$test_output"' EXIT
 "$java_bin" -cp "$test_output" app.selfonium.core.CoreTest
 "$java_bin" -cp "$test_output" app.selfonium.core.GraphicEqualizerTest
 "$java_bin" -cp "$test_output" app.selfonium.core.StorageTest
+"$java_bin" -cp "$test_output" app.selfonium.core.ListeningSessionTest
 "$java_bin" -cp "$test_output" app.selfonium.core.LibraryFilterTest
 "$java_bin" -cp "$test_output" app.selfonium.core.LanguagePolicyTest
 "$java_bin" -cp "$test_output" CheckJavaSyntax

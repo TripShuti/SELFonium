@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scrobble_title">"Rapports d’écoute"</string>
+    <string name="scrobble_summary">"Lecture en cours, scrobbling serveur et file hors ligne"</string>
+    <string name="scrobble_enabled">"Envoyer les écoutes aux serveurs musicaux"</string>
+    <string name="scrobble_hint">"Activé par défaut. Envoie uniquement aux serveurs Subsonic configurés. Leur scrobbler gère les services externes. Les fichiers locaux et la radio sont exclus. Désactiver efface la file."</string>
+    <string name="scrobble_policy">"Une écoute compte après la moitié du morceau ou quatre minutes de lecture réelle, selon ce qui arrive en premier. Les pauses, la mise en mémoire tampon et les sauts ne comptent pas."</string>
+    <string name="scrobble_pending">"Écoutes en attente : %1$d"</string>
+    <string name="scrobble_limits">"Les écoutes hors ligne conservent leur heure d’origine. La file garde jusqu’à 10 000 entrées pendant 90 jours ; les plus anciennes sont supprimées. Les états de lecture ne sont pas mis en file."</string>
+    <string name="scrobble_retry">"Envoyer les écoutes en attente"</string>
+    <string name="scrobble_clear">"Effacer les écoutes en attente"</string>
+    <string name="scrobble_clear_confirm">"Supprimer les écoutes non envoyées ? L’historique local et les données du serveur seront conservés."</string>
+    <string name="scrobble_note">"Les rapports sont réessayés lorsque le serveur est accessible. Les scrobblers externes dépendent de la configuration du serveur et de leurs limites d’ancienneté."</string>
+</resources>

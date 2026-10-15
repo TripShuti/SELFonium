@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add Subsonic now-playing notifications and qualified scrobbles, with optional OpenSubsonic playback timelines using client-controlled counting.
+- Count actual active listening time, preserve session submission markers across restarts, and queue offline server listens with original timestamps.
+- Bound unsent listens to 10,000 entries/90 days; add reporting controls, pending count, retry and queue clearing in all six UI languages.
+- Add an additive SQLite v4 migration and local time/protocol/storage regression fixtures. Local files and radio are not reported.
+
 - Put all eight library sections in one horizontally scrolling row, including the playlists page, and reveal the selected tab automatically.
 - Combine scanned and manually added music under a Local files source filter, preserving stored source identities and server/offline distinctions.
 - Remove the redundant global overflow menu and the appearance-screen column selector; keep the grid switch in the library and honor it in both orientations.

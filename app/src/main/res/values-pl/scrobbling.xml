@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scrobble_title">"Raporty odsłuchu"</string>
+    <string name="scrobble_summary">"Bieżący utwór, scrobbling na serwerze i kolejka offline"</string>
+    <string name="scrobble_enabled">"Wysyłaj raporty do serwerów muzycznych"</string>
+    <string name="scrobble_hint">"Domyślnie włączone. Wysyła dane tylko do skonfigurowanych serwerów Subsonic. Usługi zewnętrzne obsługuje scrobbler serwera. Pliki lokalne i radio są pomijane. Wyłączenie czyści kolejkę."</string>
+    <string name="scrobble_policy">"Odsłuch jest liczony po połowie utworu lub czterech minutach rzeczywistego odtwarzania, zależnie od tego, co nastąpi wcześniej. Pauzy, buforowanie i przewijanie do przodu nie są liczone."</string>
+    <string name="scrobble_pending">"Oczekujące odsłuchy: %1$d"</string>
+    <string name="scrobble_limits">"Odsłuchy offline zachowują pierwotny czas. Kolejka przechowuje do 10 000 wpisów przez 90 dni; starsze są usuwane. Raporty bieżącego odtwarzania nie są kolejkowane."</string>
+    <string name="scrobble_retry">"Wyślij oczekujące odsłuchy"</string>
+    <string name="scrobble_clear">"Wyczyść oczekujące odsłuchy"</string>
+    <string name="scrobble_clear_confirm">"Usunąć niewysłane odsłuchy? Lokalna historia i dane serwera pozostaną."</string>
+    <string name="scrobble_note">"Raporty są ponawiane, gdy serwer jest dostępny. Dostarczenie do zewnętrznych scrobblerów zależy od konfiguracji serwera i limitów wieku wpisów."</string>
+</resources>

@@ -36,6 +36,8 @@ import org.json.JSONArray;
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public final class PlaybackService extends MediaSessionService {
     private ExoPlayer player;private MediaSession session;private final EqualizerAudioProcessor equalizer=new EqualizerAudioProcessor();
+    private PlaybackScrobbler scrobbler;
+    private final SharedPreferences.OnSharedPreferenceChangeListener scrobbleSettings=(p,key)->{if("enabled".equals(key)&&scrobbler!=null)scrobbler.sample();};
     private SharedPreferences prefs;private SelfoniumApp app;
     private androidx.media3.datasource.DataSource.Factory upstream;
     private long transitionAt;private int transition,playlistGeneration;
@@ -49,7 +51,7 @@ public final class PlaybackService extends MediaSessionService {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final SharedPreferences.OnSharedPreferenceChangeListener settings=(p,key)->{if(key!=null&&(key.startsWith("dspEq_")||key.equals("eqEnabled")||key.equals("dspPreamp")||key.equals("dspHeadroom")||key.equals("speed")||key.equals("shuffle")||key.equals("repeat")))applySettings();};
     private final Runnable tick=new Runnable(){@Override public void run(){
-        if(player==null)return;
+        if(player==null)return;if(scrobbler!=null)scrobbler.sample();
         long end=prefs.getLong("sleepUntil",0);if(end>0&&System.currentTimeMillis()>=end){player.pause();prefs.edit().putLong("sleepUntil",0).apply();}
         saveQueue();getSharedPreferences("equalizer_caps",MODE_PRIVATE).edit().putInt("sampleRate",equalizer.sampleRate).putInt("channels",equalizer.channels).putLong("processedFrames",equalizer.processedFrames).apply();handler.postDelayed(this,5000);
     }};
@@ -68,24 +70,26 @@ public final class PlaybackService extends MediaSessionService {
         player.setHandleAudioBecomingNoisy(true);player.setWakeMode(C.WAKE_MODE_LOCAL);
         PendingIntent activity=PendingIntent.getActivity(this,0,new Intent(this,MainActivity.class),PendingIntent.FLAG_IMMUTABLE|PendingIntent.FLAG_UPDATE_CURRENT);
         session=new MediaSession.Builder(this,player).setSessionActivity(activity).build();
+        scrobbler=new PlaybackScrobbler(app,player);getSharedPreferences("scrobbling",MODE_PRIVATE).registerOnSharedPreferenceChangeListener(scrobbleSettings);
         restoreQueue();applySettings();prefs.registerOnSharedPreferenceChangeListener(settings);
         player.addListener(new Player.Listener(){
             @Override public void onTimelineChanged(Timeline timeline,int reason){if(reason==Player.TIMELINE_CHANGE_REASON_PLAYLIST_CHANGED){playlistGeneration++;saveTimeline();}}
             @Override public void onMediaItemTransition(MediaItem item,int reason){
-                transitionAt=android.os.SystemClock.elapsedRealtime();transition++;Log.i("SELFoniumPlayback","transition="+transition);
+                scrobbler.transition(item);transitionAt=android.os.SystemClock.elapsedRealtime();transition++;Log.i("SELFoniumPlayback","transition="+transition);
                 handler.removeCallbacks(prefetch);app.audio.cancelPrefetch();
                 if(item!=null){app.io.execute(()->app.library.played(item.mediaId));handler.postDelayed(prefetch,350);}
                 saveQueue();
             }
             @Override public void onPlayerError(androidx.media3.common.PlaybackException error){Log.w("SELFoniumPlayback","error="+error.getErrorCodeName()+" causes="+failureTypes(error));saveQueue();}
             @Override public void onPlaybackStateChanged(int state){
-                applyEqualizer();
+                applyEqualizer();scrobbler.sample();
                 if(state==Player.STATE_READY)Log.i("SELFoniumPlayback","ready transition="+transition+" elapsedMs="+(android.os.SystemClock.elapsedRealtime()-transitionAt));
             }
-            @Override public void onPlayWhenReadyChanged(boolean ready,int reason){Log.i("SELFoniumPlayback","playWhenReady="+ready+" reason="+reason);saveQueue();}
-            @Override public void onPositionDiscontinuity(Player.PositionInfo oldPosition,Player.PositionInfo newPosition,int reason){saveQueue();}
-            @Override public void onPlaybackSuppressionReasonChanged(int reason){Log.i("SELFoniumPlayback","suppression="+reason);}
-            @Override public void onIsPlayingChanged(boolean playing){Log.i("SELFoniumPlayback","playing="+playing);if(playing){handler.removeCallbacks(prefetch);handler.postDelayed(prefetch,350);}}
+            @Override public void onPlayWhenReadyChanged(boolean ready,int reason){scrobbler.sample();Log.i("SELFoniumPlayback","playWhenReady="+ready+" reason="+reason);saveQueue();}
+            @Override public void onPositionDiscontinuity(Player.PositionInfo oldPosition,Player.PositionInfo newPosition,int reason){scrobbler.discontinuity(oldPosition,newPosition);if(reason!=Player.DISCONTINUITY_REASON_AUTO_TRANSITION)scrobbler.sample(true);saveQueue();}
+            @Override public void onPlaybackSuppressionReasonChanged(int reason){scrobbler.sample();Log.i("SELFoniumPlayback","suppression="+reason);}
+            @Override public void onPlaybackParametersChanged(androidx.media3.common.PlaybackParameters parameters){scrobbler.sample(true);}
+            @Override public void onIsPlayingChanged(boolean playing){scrobbler.sample();Log.i("SELFoniumPlayback","playing="+playing);if(playing){handler.removeCallbacks(prefetch);handler.postDelayed(prefetch,350);}}
         });
         player.addAnalyticsListener(new AnalyticsListener(){
             @Override public void onAudioUnderrun(EventTime eventTime,int bufferSize,long bufferSizeMs,long elapsedSinceLastFeedMs){Log.w("SELFoniumPlayback","audio-underrun elapsedSinceFeedMs="+elapsedSinceLastFeedMs);}
@@ -119,9 +123,10 @@ public final class PlaybackService extends MediaSessionService {
             for(int i=0;i<ids.length();i++)original.add(ids.getString(i));
             var restored=QueueRestore.resolve(original,previous,position,id->app.library.get(id)!=null);
             java.util.List<MediaItem> items=new java.util.ArrayList<>();for(String id:restored.ids())items.add(item(app.library.get(id)));
-            handler.post(()->{if(player!=null&&playlistGeneration==0&&!items.isEmpty())player.setMediaItems(items,restored.index(),restored.position());});
+            var checkpoint=app.library.listeningCheckpoint();
+            handler.post(()->{if(player!=null&&playlistGeneration==0&&!items.isEmpty()){scrobbler.restore(checkpoint);player.setMediaItems(items,restored.index(),restored.position());}});
         }catch(Exception ignored){}});
     }
     @Override public MediaSession onGetSession(MediaSession.ControllerInfo controllerInfo){return controllerInfo.getUid()==android.os.Process.myUid()||controllerInfo.isTrusted()?session:null;}
-    @Override public void onDestroy(){handler.removeCallbacksAndMessages(null);app.audio.cancelPrefetch();prefs.unregisterOnSharedPreferenceChangeListener(settings);saveQueue();getSharedPreferences("equalizer_caps",MODE_PRIVATE).edit().putBoolean("available",false).apply();if(session!=null)session.release();if(player!=null)player.release();player=null;super.onDestroy();}
+    @Override public void onDestroy(){if(scrobbler!=null)scrobbler.finish();getSharedPreferences("scrobbling",MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(scrobbleSettings);handler.removeCallbacksAndMessages(null);app.audio.cancelPrefetch();prefs.unregisterOnSharedPreferenceChangeListener(settings);saveQueue();getSharedPreferences("equalizer_caps",MODE_PRIVATE).edit().putBoolean("available",false).apply();if(session!=null)session.release();if(player!=null)player.release();player=null;super.onDestroy();}
 }

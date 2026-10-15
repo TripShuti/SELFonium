@@ -60,6 +60,7 @@ final class IconButton extends View {
             case "home"->{path.moveTo(3,10);path.lineTo(12,3);path.lineTo(21,10);path.lineTo(21,21);path.lineTo(15,21);path.lineTo(15,14);path.lineTo(9,14);path.lineTo(9,21);path.lineTo(3,21);path.close();c.drawPath(path,paint);}
             case "library"->{c.drawRect(3,4,7,21,paint);c.drawRect(11,4,15,21,paint);line(c,18,4,22,20);}
             case "server"->{c.drawRoundRect(3,3,21,10,2,2,paint);c.drawRoundRect(3,14,21,21,2,2,paint);line(c,7,6,8,6);line(c,7,17,8,17);}
+            case "history"->{c.drawArc(4,4,21,21,210,300,false,paint);path.moveTo(3,4);path.lineTo(3,10);path.lineTo(9,10);c.drawPath(path,paint);line(c,12,8,12,13);line(c,12,13,16,15);}
             case "clock"->{c.drawCircle(12,12,9,paint);line(c,12,7,12,12);line(c,12,12,16,14);}
             case "download"->{line(c,12,3,12,16);line(c,7,11,12,16);line(c,12,16,17,11);path.moveTo(3,17);path.lineTo(3,21);path.lineTo(21,21);path.lineTo(21,17);c.drawPath(path,paint);}
             case "album"->{c.drawCircle(12,12,9,paint);c.drawCircle(12,12,3,paint);}

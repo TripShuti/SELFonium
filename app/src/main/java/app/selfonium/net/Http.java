@@ -61,8 +61,9 @@ public final class Http {
         }
         throw new IOException("Забагато перенаправлень");
     }
-    public static String text(String method,String url,Map<String,String> headers,String body) throws IOException {
-        try(Response response=open(method,url,headers,body==null?null:body.getBytes(StandardCharsets.UTF_8));InputStream in=response.input();ByteArrayOutputStream out=new ByteArrayOutputStream()){
+    public static String text(String method,String url,Map<String,String> headers,String body) throws IOException {return text(method,url,headers,body,null);}
+    public static String text(String method,String url,Map<String,String> headers,String body,Cancel cancel) throws IOException {
+        try(Response response=open(method,url,headers,body==null?null:body.getBytes(StandardCharsets.UTF_8),cancel);InputStream in=response.input();ByteArrayOutputStream out=new ByteArrayOutputStream()){
             byte[] buffer=new byte[16384];int n;
             while((n=in.read(buffer))!=-1){if(out.size()+n>32*1024*1024)throw new IOException("Відповідь перевищує 32 МБ");out.write(buffer,0,n);}
             return out.toString(StandardCharsets.UTF_8.name());

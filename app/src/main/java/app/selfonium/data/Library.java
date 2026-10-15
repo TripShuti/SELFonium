@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import app.selfonium.core.Track;
+import app.selfonium.core.ListeningSession;
 import app.selfonium.core.LibraryFilter;
 import app.selfonium.core.ServerPlaylist;
 import java.util.*;
@@ -20,19 +21,24 @@ public final class Library extends SQLiteOpenHelper {
     public record Preview(long version,boolean value) {}
     public record FavoriteChange(String track,String source,String remoteId,boolean value,long revision) {}
     public record Playlist(long id,String name,String source,String remoteId,boolean writable,int count) {public boolean remote(){return !remoteId.isEmpty();}}
-    public Library(Context context) { super(context,"selfonium.db",null,3); }
+    public Library(Context context) { super(context,"selfonium.db",null,4); }
     @Override public void onConfigure(SQLiteDatabase db) { db.setForeignKeyConstraintsEnabled(true); db.enableWriteAheadLogging(); }
     @Override public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE tracks(id TEXT PRIMARY KEY,source TEXT NOT NULL,remote_id TEXT,title TEXT,artist TEXT,album TEXT,uri TEXT,duration INTEGER,number INTEGER,favorite INTEGER NOT NULL DEFAULT 0,played INTEGER NOT NULL DEFAULT 0,offline TEXT NOT NULL DEFAULT '',artwork TEXT NOT NULL DEFAULT '')");
         db.execSQL("CREATE INDEX tracks_source ON tracks(source)");
         db.execSQL("CREATE TABLE playlists(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL UNIQUE)");
         db.execSQL("CREATE TABLE playlist_tracks(playlist INTEGER REFERENCES playlists(id) ON DELETE CASCADE,track TEXT REFERENCES tracks(id) ON DELETE CASCADE,position INTEGER NOT NULL,PRIMARY KEY(playlist,position))");
-        createSocialTables(db);
+        createSocialTables(db);createScrobbleTables(db);
     }
     private static void createSocialTables(SQLiteDatabase db){
         db.execSQL("CREATE TABLE remote_playlists(playlist INTEGER PRIMARY KEY REFERENCES playlists(id) ON DELETE CASCADE,source TEXT NOT NULL,remote_id TEXT NOT NULL,remote_name TEXT NOT NULL,writable INTEGER NOT NULL,UNIQUE(source,remote_id))");
         db.execSQL("CREATE TABLE favorite_outbox(track TEXT PRIMARY KEY REFERENCES tracks(id) ON DELETE CASCADE,value INTEGER NOT NULL,revision INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE social_sources(source TEXT PRIMARY KEY)");
+    }
+    private static void createScrobbleTables(SQLiteDatabase db){
+        db.execSQL("CREATE TABLE scrobble_outbox(session TEXT PRIMARY KEY,source TEXT NOT NULL,remote_id TEXT NOT NULL,account TEXT NOT NULL,started INTEGER NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,retry_at INTEGER NOT NULL DEFAULT 0)");
+        db.execSQL("CREATE INDEX scrobble_retry ON scrobble_outbox(retry_at,started)");
+        db.execSQL("CREATE TABLE listening_checkpoint(slot INTEGER PRIMARY KEY CHECK(slot=1),session TEXT NOT NULL,track TEXT NOT NULL,source TEXT NOT NULL,remote_id TEXT NOT NULL,account TEXT NOT NULL,started INTEGER NOT NULL,listened INTEGER NOT NULL,submitted INTEGER NOT NULL)");
     }
     @Override public void onUpgrade(SQLiteDatabase db,int from,int to) {
         if(from<2)db.execSQL("ALTER TABLE tracks ADD COLUMN artwork TEXT NOT NULL DEFAULT ''");
@@ -43,6 +49,7 @@ public final class Library extends SQLiteOpenHelper {
             db.execSQL("ALTER TABLE playlist_entries RENAME TO playlist_tracks");
             createSocialTables(db);
         }
+        if(from<4)createScrobbleTables(db);
     }
     public synchronized void merge(String source,List<Track> tracks,boolean prune) {
         SQLiteDatabase db=getWritableDatabase(); db.beginTransaction();
@@ -109,9 +116,44 @@ public final class Library extends SQLiteOpenHelper {
     public synchronized void removeSource(String id) {
         SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{
             db.execSQL("DELETE FROM playlists WHERE id IN (SELECT playlist FROM remote_playlists WHERE source=?)",new Object[]{id});
+            db.delete("scrobble_outbox","source=?",new String[]{id});db.delete("listening_checkpoint","source=?",new String[]{id});
             db.delete("tracks","source=?",new String[]{id});db.delete("social_sources","source=?",new String[]{id});db.setTransactionSuccessful();
         }finally{db.endTransaction();}trackCache.entrySet().removeIf(e->{boolean removed=id.equals(e.getValue().sourceId);if(removed)favoriteCache.remove(e.getKey());return removed;});
     }
+    public record Scrobble(String session,String source,String remote,String account,long started,int attempts,long retryAt){}
+    public record Checkpoint(ListeningSession.State state,String source,String remote,String account){}
+    public synchronized Checkpoint listeningCheckpoint(){
+        try(Cursor c=getReadableDatabase().rawQuery("SELECT * FROM listening_checkpoint WHERE slot=1",null)){
+            if(!c.moveToFirst())return null;
+            return new Checkpoint(new ListeningSession.State(c.getString(1),c.getString(2),c.getLong(6),c.getLong(7),c.getInt(8)!=0),c.getString(3),c.getString(4),c.getString(5));
+        }
+    }
+    /** Submission and its persisted marker are atomic; stale snapshots cannot re-enqueue an ACKed session. */
+    public synchronized boolean saveListening(ListeningSession.State state,String source,String remote,String account,long duration,long now){
+        SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{
+            Checkpoint previous=listeningCheckpoint();boolean submitted=state.submitted()||previous!=null&&previous.state().session().equals(state.session())&&previous.state().submitted();
+            if(!submitted&&state.started()>0&&duration>0&&state.listened()>=ListeningSession.threshold(duration)){
+                ContentValues row=new ContentValues();row.put("session",state.session());row.put("source",source);row.put("remote_id",remote);row.put("account",account);row.put("started",state.started());long inserted=db.insertWithOnConflict("scrobble_outbox",null,row,SQLiteDatabase.CONFLICT_IGNORE);if(inserted<0){try(Cursor existing=db.rawQuery("SELECT 1 FROM scrobble_outbox WHERE session=?",new String[]{state.session()})){if(!existing.moveToFirst())throw new android.database.sqlite.SQLiteException("Unable to store pending listen");}}submitted=true;
+            }
+            ContentValues row=new ContentValues();row.put("slot",1);row.put("session",state.session());row.put("track",state.track());row.put("source",source);row.put("remote_id",remote);row.put("account",account);row.put("started",state.started());row.put("listened",state.listened());row.put("submitted",submitted?1:0);if(db.insertWithOnConflict("listening_checkpoint",null,row,SQLiteDatabase.CONFLICT_REPLACE)<0)throw new android.database.sqlite.SQLiteException("Unable to save listening session");
+            pruneScrobbles(now);db.setTransactionSuccessful();return submitted;
+        }finally{db.endTransaction();}
+    }
+    public synchronized void pruneScrobbles(long now){
+        SQLiteDatabase db=getWritableDatabase();db.delete("scrobble_outbox","started<?",new String[]{Long.toString(Math.max(0,now-ListeningSession.RETENTION))});
+        db.execSQL("DELETE FROM scrobble_outbox WHERE session IN (SELECT session FROM scrobble_outbox ORDER BY started DESC,session DESC LIMIT -1 OFFSET 10000)");
+    }
+    public synchronized List<Scrobble> dueScrobbles(long now){
+        List<Scrobble> events=new ArrayList<>();try(Cursor c=getReadableDatabase().rawQuery("SELECT session,source,remote_id,account,started,attempts,retry_at FROM scrobble_outbox WHERE retry_at<=? ORDER BY started,session LIMIT 25",new String[]{Long.toString(now)})){
+            while(c.moveToNext())events.add(new Scrobble(c.getString(0),c.getString(1),c.getString(2),c.getString(3),c.getLong(4),c.getInt(5),c.getLong(6)));
+        }return events;
+    }
+    public void acknowledgeScrobble(String session){getWritableDatabase().delete("scrobble_outbox","session=?",new String[]{session});}
+    public void retryScrobble(Scrobble event,long when){ContentValues row=new ContentValues();row.put("attempts",Math.min(100,event.attempts()+1));row.put("retry_at",when);getWritableDatabase().update("scrobble_outbox",row,"session=?",new String[]{event.session()});}
+    public void resetScrobbleRetries(){ContentValues row=new ContentValues();row.put("retry_at",0);row.put("attempts",0);getWritableDatabase().update("scrobble_outbox",row,null,null);}
+    public int scrobbleCount(){try(Cursor c=getReadableDatabase().rawQuery("SELECT COUNT(*) FROM scrobble_outbox",null)){return c.moveToFirst()?c.getInt(0):0;}}
+    public synchronized void clearScrobbleQueue(){getWritableDatabase().delete("scrobble_outbox",null,null);}
+    public synchronized void clearScrobbles(){SQLiteDatabase db=getWritableDatabase();db.beginTransaction();try{db.delete("scrobble_outbox",null,null);db.delete("listening_checkpoint",null,null);db.setTransactionSuccessful();}finally{db.endTransaction();}}
     public long createPlaylist(String name) {
         if(name.trim().isEmpty())throw new IllegalArgumentException("Введіть назву");
         ContentValues v=new ContentValues();v.put("name",name.trim());return getWritableDatabase().insertOrThrow("playlists",null,v);

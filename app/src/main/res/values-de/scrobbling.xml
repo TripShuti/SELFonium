@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scrobble_title">"Wiedergabeberichte"</string>
+    <string name="scrobble_summary">"Aktuelle Wiedergabe, Server-Scrobbling und Offline-Warteschlange"</string>
+    <string name="scrobble_enabled">"Wiedergabe an Musikserver melden"</string>
+    <string name="scrobble_hint">"Standardmäßig aktiviert. Meldungen gehen nur an konfigurierte Subsonic-Server. Deren Scrobbler bedient externe Dienste. Lokale Dateien und Radio sind ausgeschlossen. Deaktivieren leert die Warteschlange."</string>
+    <string name="scrobble_policy">"Eine Wiedergabe zählt nach der Hälfte des Titels oder vier Minuten tatsächlichem Abspielen, je nachdem, was früher eintritt. Pausen, Puffern und Vorspulen zählen nicht."</string>
+    <string name="scrobble_pending">"Ausstehende Wiedergaben: %1$d"</string>
+    <string name="scrobble_limits">"Offline-Wiedergaben behalten ihre ursprüngliche Zeit. Bis zu 10.000 Einträge werden 90 Tage aufbewahrt; ältere verfallen. Meldungen zur aktuellen Wiedergabe werden nicht gespeichert."</string>
+    <string name="scrobble_retry">"Ausstehende Wiedergaben senden"</string>
+    <string name="scrobble_clear">"Ausstehende Wiedergaben löschen"</string>
+    <string name="scrobble_clear_confirm">"Ungesendete Wiedergaben verwerfen? Lokaler Verlauf und Serverdaten bleiben erhalten."</string>
+    <string name="scrobble_note">"Meldungen werden bei erreichbarem Server erneut gesendet. Externe Scrobbler hängen von der Serverkonfiguration und ihren Zeitlimits ab."</string>
+</resources>

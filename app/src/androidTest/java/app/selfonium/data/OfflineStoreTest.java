@@ -68,6 +68,15 @@ public final class OfflineStoreTest extends InstrumentationTestCase {
         }
         assertEquals(2,library.playlist(mixed).size());
     }
+    public void testScrobbleSubmissionMarkerSurvivesAcknowledgement(){
+        Track track=add("server:one");long now=System.currentTimeMillis();ListeningSession.State state=new ListeningSession.State("first",track.id,now,90_000,false);
+        assertTrue(library.saveListening(state,"fixture",track.remoteId,"identity",180_000,now));assertEquals(1,library.scrobbleCount());
+        library.acknowledgeScrobble("first");assertEquals(0,library.scrobbleCount());assertTrue(library.saveListening(state,"fixture",track.remoteId,"identity",180_000,now));assertEquals(0,library.scrobbleCount());assertTrue(library.listeningCheckpoint().state().submitted());
+        ListeningSession.State repeat=new ListeningSession.State("repeat",track.id,now+1,90_000,false);assertTrue(library.saveListening(repeat,"fixture",track.remoteId,"identity",180_000,now));assertEquals(1,library.scrobbleCount());
+        library.retryScrobble(library.dueScrobbles(now).get(0),now+60000);assertTrue(library.dueScrobbles(now).isEmpty());
+        library.clearScrobbleQueue();assertTrue(library.saveListening(repeat,"fixture",track.remoteId,"identity",180_000,now));assertEquals(0,library.scrobbleCount());
+        library.removeSource("fixture");assertNull(library.listeningCheckpoint());
+    }
     public void testLegacyDownloadCheckPreservesValidFile()throws Exception{
         add("legacy");File file=offline.target("legacy");Files.write(file.toPath(),new byte[]{1});library.offline("legacy",file.getAbsolutePath());assertTrue(offline.verify().damaged().isEmpty());assertTrue(file.exists());
     }

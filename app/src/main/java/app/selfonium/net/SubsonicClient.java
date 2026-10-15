@@ -37,10 +37,11 @@ public final class SubsonicClient {
     private final Map<String,Map<String,Set<Integer>>> extensions=new java.util.concurrent.ConcurrentHashMap<>();
     public boolean supports(Source source,String name,int version){return extensions.getOrDefault(source.id,Map.of()).getOrDefault(name,Set.of()).contains(version);}
     /** Optional discovery never makes the baseline Subsonic library depend on extensions. */
-    private void discover(Source source,JSONObject ping){
+    private void discover(Source source,JSONObject ping){discover(source,ping,null);}
+    private void discover(Source source,JSONObject ping,Http.Cancel cancel){
         Map<String,Set<Integer>> found=new java.util.HashMap<>();
         if(ping.optBoolean("openSubsonic",false))try{
-            JSONArray entries=sub(source,"getOpenSubsonicExtensions",Map.of()).getJSONArray("openSubsonicExtensions");
+            JSONArray entries=sub(source,"getOpenSubsonicExtensions",Map.of(),cancel).getJSONArray("openSubsonicExtensions");
             for(int i=0;i<entries.length();i++){
                 JSONObject entry=entries.getJSONObject(i);JSONArray versions=entry.getJSONArray("versions");Set<Integer> supported=new HashSet<>();
                 for(int at=0;at<versions.length();at++)supported.add(versions.getInt(at));
@@ -53,10 +54,21 @@ public final class SubsonicClient {
     }
     public SubsonicClient(SourceStore store){this(store,message->{});}
     public SubsonicClient(SourceStore store,java.util.function.Consumer<String> diagnostics){this.store=store;this.diagnostics=diagnostics;}
-    private JSONObject sub(Source s,String method,Map<String,String> args) throws Exception {
-        JSONObject response=new JSONObject(Http.text("GET",Protocol.subsonic(s,method,args),Map.of(),null)).getJSONObject("subsonic-response");
+    private JSONObject sub(Source s,String method,Map<String,String> args) throws Exception {return sub(s,method,args,null);}
+    private JSONObject sub(Source s,String method,Map<String,String> args,Http.Cancel cancel) throws Exception {
+        JSONObject response=new JSONObject(Http.text("GET",Protocol.subsonic(s,method,args),Map.of(),null,cancel)).getJSONObject("subsonic-response");
         if(!"ok".equals(response.optString("status")))throw new ApiException(response.optJSONObject("error")==null?-1:response.getJSONObject("error").optInt("code",-1));
         return response;
+    }
+    public void discoverPlayback(Source source,Http.Cancel cancel)throws Exception{if(!extensions.containsKey(source.id))discover(source,sub(source,"ping",Map.of(),cancel),cancel);}
+    public void disablePlaybackReport(Source source){Map<String,Set<Integer>> known=new java.util.HashMap<>(extensions.getOrDefault(source.id,Map.of()));known.remove("playbackReport");extensions.put(source.id,Map.copyOf(known));}
+    public void scrobble(Source source,String remote,long time,boolean submission,Http.Cancel cancel)throws Exception{
+        if(remote==null||remote.isEmpty()||time<=0)throw new IllegalArgumentException();
+        sub(source,"scrobble",Map.of("id",remote,"time",Long.toString(time),"submission",Boolean.toString(submission)),cancel);
+    }
+    public void reportPlayback(Source source,String remote,String state,long position,float rate,Http.Cancel cancel)throws Exception{
+        if(!Set.of("starting","playing","paused","stopped").contains(state)||!Float.isFinite(rate)||rate<=0||remote==null||remote.isEmpty())throw new IllegalArgumentException();
+        sub(source,"reportPlayback",Map.of("mediaId",remote,"mediaType","song","state",state,"positionMs",Long.toString(Math.max(0,position)),"playbackRate",Float.toString(rate),"ignoreScrobble","true"),cancel);
     }
     public List<Track> synchronize(Source s,Progress progress) throws Exception {
         return subsonic(s,progress);

@@ -8,7 +8,7 @@
 | Local audio | Android MediaStore scan, document-picker import, embedded artwork | No recursive folder scanner |
 | Radio | Direct HTTP(S) audio streams and `.m3u8` HLS URLs | No station directory or M3U/PLS playlist resolution |
 
-Only Subsonic/OpenSubsonic is supported as a remote library API. OpenSubsonic extension names and versions are discovered when advertised, but optional extension features are not implemented merely because discovery succeeds. API-key authentication, scrobbling, ratings, album/artist stars and lyrics are not implemented. [SYNCHRONIZATION.md](SYNCHRONIZATION.md) lists the endpoints and behavior.
+Only Subsonic/OpenSubsonic is supported as a remote library API. OpenSubsonic extension names and versions are discovered when advertised, but optional extension features are not implemented merely because discovery succeeds. API-key authentication, ratings, album/artist stars and lyrics are not implemented. Development builds add server listening reports and a bounded offline scrobble queue; this is not in 0.6.5. [SYNCHRONIZATION.md](SYNCHRONIZATION.md) lists the endpoints and behavior.
 
 Retired source records remain encrypted and hidden after upgrades. Their stored library entries and downloaded files are retained; their removed online connectors cannot play remote files.
 

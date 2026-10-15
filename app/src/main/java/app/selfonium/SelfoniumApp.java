@@ -20,6 +20,7 @@ public final class SelfoniumApp extends Application {
     public ArtworkRepository artwork;
     public SocialSync social;
     public AudioRepository audio;
+    public app.selfonium.data.ScrobbleRepository scrobbles;
     public app.selfonium.data.OfflineStore offline;
     public app.selfonium.data.DownloadRepository downloads;
     public app.selfonium.data.StorageRepository storage;
@@ -40,10 +41,11 @@ public final class SelfoniumApp extends Application {
         downloads=new app.selfonium.data.DownloadRepository(this);
         storage=new app.selfonium.data.StorageRepository(this);
         social = new SocialSync(this);social.requestFlush();
+        scrobbles=new app.selfonium.data.ScrobbleRepository(this);
         updates=new app.selfonium.update.UpdateManager(this);
         android.net.ConnectivityManager connectivity=getSystemService(android.net.ConnectivityManager.class);
         connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){
-            @Override public void onAvailable(android.net.Network network){social.networkAvailable();main.post(downloads::networkChanged);}
+            @Override public void onAvailable(android.net.Network network){social.networkAvailable();scrobbles.networkAvailable();main.post(downloads::networkChanged);}
             @Override public void onCapabilitiesChanged(android.net.Network network,android.net.NetworkCapabilities capabilities){main.post(downloads::networkChanged);}
             @Override public void onLost(android.net.Network network){main.post(downloads::networkChanged);}
         });

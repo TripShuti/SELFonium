@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scrobble_title">"Informes de escucha"</string>
+    <string name="scrobble_summary">"Reproducción actual, scrobbling del servidor y cola sin conexión"</string>
+    <string name="scrobble_enabled">"Enviar informes a los servidores de música"</string>
+    <string name="scrobble_hint">"Activado por defecto. Envía datos solo a tus servidores Subsonic. Su scrobbler gestiona los servicios externos. Se excluyen los archivos locales y la radio. Desactivar vacía la cola."</string>
+    <string name="scrobble_policy">"Una escucha cuenta tras la mitad de la pista o cuatro minutos de reproducción real, lo que ocurra antes. No cuentan las pausas, el almacenamiento en búfer ni los saltos hacia adelante."</string>
+    <string name="scrobble_pending">"Escuchas pendientes: %1$d"</string>
+    <string name="scrobble_limits">"Las escuchas sin conexión conservan su hora original. Se guardan hasta 10 000 entradas durante 90 días; se descartan las antiguas. Los estados de reproducción no se encolan."</string>
+    <string name="scrobble_retry">"Enviar escuchas pendientes"</string>
+    <string name="scrobble_clear">"Borrar escuchas pendientes"</string>
+    <string name="scrobble_clear_confirm">"¿Descartar las escuchas sin enviar? Se conservarán el historial local y los registros del servidor."</string>
+    <string name="scrobble_note">"Los informes se reintentan cuando el servidor está disponible. Los scrobblers externos dependen de la configuración del servidor y sus límites de antigüedad."</string>
+</resources>

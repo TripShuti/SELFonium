@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scrobble_title">"Listening reports"</string>
+    <string name="scrobble_summary">"Now playing, server scrobbling and offline queue"</string>
+    <string name="scrobble_enabled">"Send listening reports to music servers"</string>
+    <string name="scrobble_hint">"Enabled by default. Sends only to your configured Subsonic servers. Their configured scrobbler handles external services. Local files and radio are excluded. Disabling clears pending reports."</string>
+    <string name="scrobble_policy">"A listen counts after half the track or four minutes of actual playback, whichever is earlier. Pauses, buffering and seeking ahead do not count."</string>
+    <string name="scrobble_pending">"Pending listens: %1$d"</string>
+    <string name="scrobble_limits">"Offline listens retain their original time. Up to 10,000 pending entries are kept for 90 days; older entries are discarded. Live now-playing reports are not queued."</string>
+    <string name="scrobble_retry">"Send pending listens"</string>
+    <string name="scrobble_clear">"Clear pending listens"</string>
+    <string name="scrobble_clear_confirm">"Discard unsent listens? Local listening history and server records will remain."</string>
+    <string name="scrobble_note">"Pending reports retry automatically when the server is reachable. Delivery to external scrobblers depends on server configuration and their age limits."</string>
+</resources>

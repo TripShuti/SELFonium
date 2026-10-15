@@ -16,6 +16,8 @@
 
 - One-row library navigation, combined Local files filtering, removal of duplicate controls and distinct settings/source icons. Host checks and Java/resource compilation are separate from Android UI runtime validation.
 
+- Server now-playing reports and qualified listens with a bounded durable offline queue, optional OpenSubsonic timeline reports and user controls. Protocol/storage/time fixtures are separate from real-server/device validation.
+
 ## Next
 
 - Exercise more lifecycle, audio-focus, Bluetooth and network interruption cases, including the minimum supported Android version.

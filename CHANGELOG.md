@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.6.5
+
 - Add Settings → Storage with private-data usage, device free space, offline totals and separate cache/temporary-file maintenance.
 - Add audio-cache limits and a next-track prefetch switch; defer active-cache cleanup and retain leased offline files.
 - Add a durable download queue, progress, cancellation, retry and Wi-Fi-only remote downloads using the existing foreground service.

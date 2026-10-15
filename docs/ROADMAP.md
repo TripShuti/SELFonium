@@ -12,7 +12,7 @@
 
 ## Development branch
 
-- Storage overview, configurable audio cache/prefetch, offline maintenance and a durable download queue with Wi-Fi policy, cancellation and retry. Host checks and Java/resource compilation have been performed; Android storage-screen and foreground-service scenarios remain pending. See [FEATURES.md](FEATURES.md#storage-management-development).
+- Storage overview, configurable audio cache/prefetch, offline maintenance and a durable download queue with Wi-Fi policy, cancellation and retry. Host checks and Java/resource compilation have been performed; Android storage-screen and foreground-service scenarios remain pending. See [FEATURES.md](FEATURES.md#storage-management).
 
 ## Next
 

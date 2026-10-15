@@ -22,7 +22,7 @@ Server favorites sync both ways and retain pending changes offline. Server playl
 
 Offline downloads save whole files before marking them available. Streaming cache and next-track prefetch are separate from deliberate downloads. Android can remove cached data.
 
-## Storage management (development)
+## Storage management
 
 Settings → Storage shows downloaded music and track count, streaming audio, artwork, database, temporary/update files, other private app data and device free space. The overview measures private data, not the installed APK size or other apps. Measurements run on a separate worker and refresh while the screen is open. The Offline tab also shows the size of the listed tracks.
 
@@ -34,7 +34,7 @@ Deleting offline copies preserves server/original local files, library records, 
 
 Temporary cleanup only removes managed abandoned partial/orphan downloads and stale update files. Active transfers and update APKs ready for installation are retained. Downloads reserve 8 MiB of free space, verify known response lengths and publish a completed file before marking it offline. Storage remains private and internal; uninstalling the app removes these files. SD-card selection, offline storage quotas and automatic playlist-download policies are not implemented.
 
-Storage management is not included in the published 0.6.4 APK. See [testing](TESTING.md#storage-management) for validation scope.
+Storage management is introduced in version 0.6.5. See [testing](TESTING.md#storage-management) for validation scope.
 
 ## Interface and audio
 

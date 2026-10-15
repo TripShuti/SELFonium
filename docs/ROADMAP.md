@@ -6,19 +6,20 @@
 - Bounded parallel catalog requests, audio/artwork caching, durable favorite retries and queue recovery.
 - Host-side protocol/DSP/storage tests, including a 3000-album fixture; selected network/restart scenarios on Android 14.
 - Portrait/landscape player layouts and appearance settings.
-- Signed GitHub releases through 0.6.5 using the same certificate.
-- Local signing/backup tooling and working protected GitHub release automation, including successful 0.6.3, 0.6.4 and 0.6.5 runs.
+- Signed GitHub releases through 0.6.6 using the same certificate.
+- Local signing/backup tooling and working protected GitHub release automation, including successful 0.6.3 through 0.6.6 runs.
 - In-app GitHub updates and six UI languages, published in 0.6.4. The maintainer confirmed successful in-app discovery, download and installation on the test phone; broader updater and language coverage remains separate.
-- Storage overview, configurable audio cache/prefetch, offline maintenance and a durable download queue, published in 0.6.5. Storage-specific device scenarios remain pending. See [FEATURES.md](FEATURES.md#storage-management).
+- Storage overview, configurable audio cache/prefetch, offline maintenance and a durable download queue, published in 0.6.5. Selected storage overview and waiting-queue/restart/cancellation scenarios were checked on Android 14; destructive and active-transfer cases remain pending. See [FEATURES.md](FEATURES.md#storage-management).
 
 ## Version 0.6.6
 
-- One-row library navigation, combined Local files filtering, removal of duplicate controls and distinct settings/source icons. Host checks and Java/resource compilation are separate from Android UI runtime validation.
-- Server now-playing reports and qualified listens with a bounded durable offline queue, optional OpenSubsonic timeline reports and user controls. Protocol/storage/time fixtures are separate from real-server/device validation.
+- One-row library navigation, combined Local files filtering, removal of duplicate controls and distinct settings/source icons. Host checks and an Android 14 UI review are recorded separately from instrumentation execution.
+- Server now-playing reports and qualified listens with a bounded durable offline queue, optional OpenSubsonic timeline reports and user controls. An Android 14 offline-listen queue/retry check complements host fixtures; external server/scrobbler receipt remains unverified.
 
 ## Next
 
-- Validate 0.6.6 navigation and listening reports on Android and Navidrome; keep the host and device evidence separate.
+- Preserve open player/settings surfaces across rotation and improve large-font navigation/equalizer label spacing.
+- Extend 0.6.6 navigation/listening-report device coverage and verify server-side receipt on Navidrome; keep host and device evidence separate.
 - Extend the existing network/restart and screen/font checks with lifecycle, audio-focus, Bluetooth and minimum-Android regression coverage.
 - Continue Navidrome device testing and expand protocol fixtures for optional capabilities and server errors.
 - Audit TalkBack accessibility, proofread translations and test more screen sizes.

@@ -45,6 +45,7 @@ import java.util.*;
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
 public final class MainActivity extends Activity {
     private UpdateDialog updateDialog;private LinearLayout updateBanner;
+    private Bundle restoredScreens;private boolean resumed;
     private final java.util.function.Consumer<app.selfonium.update.UpdateManager.State> updatesChanged=this::onUpdateState;
     private SelfoniumApp app;private MediaController player;private ListenableFuture<MediaController> controllerFuture;
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
@@ -68,21 +69,43 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle state){
         super.onCreate(state);Ui.load(this);app=(SelfoniumApp)getApplication();settings=getSharedPreferences("player",MODE_PRIVATE);
         if(state!=null){tab=state.getInt("tab");category=state.getString("category","Композиції");section=state.getString("section","");query=state.getString("query","");libraryCategory=state.getString("libraryCategory","Альбоми");sourceFilter=LibraryFilter.normalize(state.getString("sourceFilter",""));if(tab==1&&(section.equals("category")||section.equals("playlists"))){libraryCategory=category;section="";}}
+        restoredScreens=state==null?null:state.getBundle("screens");
         build();reload();
         controllerFuture=new MediaController.Builder(this,new SessionToken(this,new ComponentName(this,PlaybackService.class))).buildAsync();
         controllerFuture.addListener(()->{
+            if(isDestroyed())return;
             try{player=controllerFuture.get();player.addListener(new Player.Listener(){
-                @Override public void onEvents(Player p,Player.Events events){updatePlayer();}
+                @Override public void onEvents(Player p,Player.Events events){restoreScreens();updatePlayer();}
                 @Override public void onPlayerError(PlaybackException e){message(Texts.get(MainActivity.this,R.string.ui_playback_failed_check_the_network_or_file));}
-            });updatePlayer();}catch(Exception e){message(Texts.get(MainActivity.this,R.string.ui_could_not_connect_to_the_player));}
+            });restoreScreens();updatePlayer();}catch(Exception e){message(Texts.get(MainActivity.this,R.string.ui_could_not_connect_to_the_player));}
         },command->handler.post(command));
     }
     @Override protected void onStart(){super.onStart();app.downloads.foreground(true);app.downloads.listen(offlineChanged);app.updates.foreground(true);app.updates.listen(updatesChanged);app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();app.scrobbles.request(false);handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
     @Override protected void onStop(){if(updateDialog!=null)updateDialog.onStop();app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.downloads.foreground(false);app.downloads.unlisten(offlineChanged);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
     @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(storageDialog!=null)storageDialog.dismiss();if(scrobbleDialog!=null)scrobbleDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
-    @Override protected void onResume(){super.onResume();if(updateDialog!=null)updateDialog.onResume();}
+    @Override protected void onResume(){super.onResume();resumed=true;restoreScreens();if(updateDialog!=null)updateDialog.onResume();}
+    @Override protected void onPause(){resumed=false;super.onPause();}
     @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&app!=null)updatesChanged.accept(app.updates.state());}
-    @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);state.putString("sourceFilter",sourceFilter);super.onSaveInstanceState(state);}
+    @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);state.putString("sourceFilter",sourceFilter);
+        Bundle screens=restoredScreens==null?new Bundle():new Bundle(restoredScreens);
+        ScreenState.save(screens,"player",playerDialog);ScreenState.save(screens,"queue",queueDialog);ScreenState.save(screens,"equalizer",equalizerDialog);
+        ScreenState.save(screens,"storage",storageDialog);ScreenState.save(screens,"scrobbling",scrobbleDialog);ScreenState.save(screens,"updates",updateDialog==null?null:updateDialog.window());
+        state.putBundle("screens",screens);super.onSaveInstanceState(state);}
+    private void restoreScreens(){
+        if(restoredScreens==null||!resumed||isFinishing()||isDestroyed())return;
+        if((restoredScreens.containsKey("player")||restoredScreens.containsKey("queue"))&&player==null)return;
+        // A cold process can reconnect its controller before the saved timeline has loaded.
+        if(restoredScreens.containsKey("player")&&player.getCurrentMediaItem()==null)return;
+        Bundle screens=restoredScreens;restoredScreens=null;
+        if(screens.containsKey("player")){showPlayer();ScreenState.restore(playerDialog,screens.getBundle("player"));}
+        if(screens.containsKey("queue")){queue();ScreenState.restore(queueDialog,screens.getBundle("queue"));}
+        if(screens.containsKey("equalizer")){showEqualizer();ScreenState.restore(equalizerDialog,screens.getBundle("equalizer"));}
+        if(screens.containsKey("storage")){showStorage();ScreenState.restore(storageDialog,screens.getBundle("storage"));}
+        if(screens.containsKey("scrobbling")){showScrobbling();ScreenState.restore(scrobbleDialog,screens.getBundle("scrobbling"));}
+        if(screens.containsKey("updates")){showUpdates();ScreenState.restore(updateDialog.window(),screens.getBundle("updates"));}
+    }
+    private void showStorage(){storageDialog=StorageDialog.show(this,()->openCategory("Офлайн"));}
+    private void showScrobbling(){scrobbleDialog=ScrobbleDialog.show(this,app.scrobbles);}
     private boolean landscape(){return getResources().getConfiguration().orientation==2;}
     private int dp(float n){return Ui.dp(this,n);}
     private IconButton icon(String name,String description,Runnable action){return new IconButton(this,name,description,action);}
@@ -104,14 +127,12 @@ public final class MainActivity extends Activity {
         miniProgress=new ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal);miniProgress.setMax(1000);miniProgress.setProgressTintList(android.content.res.ColorStateList.valueOf(Ui.ACCENT));miniProgress.setProgressBackgroundTintList(android.content.res.ColorStateList.valueOf(Ui.RAISED));playerCard.addView(miniProgress,new LinearLayout.LayoutParams(-1,dp(2)));
         LinearLayout.LayoutParams cardSize=new LinearLayout.LayoutParams(-1,-2);cardSize.setMargins(dp(12),dp(4),dp(12),dp(6));root.addView(playerCard,cardSize);
         navigation=Ui.row(this);navigation.setBackgroundColor(Ui.SURFACE);String[] names={Texts.get(MainActivity.this,R.string.ui_home),Texts.get(MainActivity.this,R.string.ui_library),Texts.get(MainActivity.this,R.string.ui_search),Texts.get(MainActivity.this,R.string.ui_settings)},icons={"home","library","search","settings"};
-        for(int i=0;i<names.length;i++){final int selected=i;LinearLayout cell=Ui.column(this);cell.setGravity(Gravity.CENTER);Ui.pad(cell,0,landscape()?2:6);Runnable open=()->navigate(selected);
-            IconButton button=icon(icons[i],names[i],open);cell.addView(button,new LinearLayout.LayoutParams(dp(56),dp(30)));Ui.space(cell,5);
-            TextView label=Ui.text(this,names[i],11,Ui.MUTED);label.setGravity(Gravity.CENTER);label.setSingleLine(true);label.setEllipsize(android.text.TextUtils.TruncateAt.END);cell.addView(label,new LinearLayout.LayoutParams(-1,-2));cell.setOnClickListener(v->open.run());navigation.addView(cell,new LinearLayout.LayoutParams(0,dp(landscape()?56:64),1));}
+        for(int i=0;i<names.length;i++){final int selected=i;navigation.addView(Ui.navigationItem(this,names[i],icons[i],landscape(),()->navigate(selected)),new LinearLayout.LayoutParams(0,-2,1));}
         root.addView(navigation);setContentView(root);
     }
-    private void navigate(int selected){hideKeyboard();tab=selected;section="";query="";if(selected==2)category="Композиції";if(selected==1)category=libraryCategory;detailShowing=false;render();}
+    private void navigate(int selected){restoredScreens=null;hideKeyboard();tab=selected;section="";query="";if(selected==2)category="Композиції";if(selected==1)category=libraryCategory;detailShowing=false;render();}
     private void hideKeyboard(){View focus=getCurrentFocus();if(focus!=null){((android.view.inputmethod.InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(focus.getWindowToken(),0);focus.clearFocus();}}
-    private void goBack(){hideKeyboard();if(detailShowing){if(!detailHistory.isEmpty()){detailShowing=false;detailHistory.removeLast().run();}else render();return;}if(!section.isEmpty()){section="";render();return;}if(tab!=0){navigate(0);return;}super.onBackPressed();}
+    private void goBack(){restoredScreens=null;hideKeyboard();if(detailShowing){if(!detailHistory.isEmpty()){detailShowing=false;detailHistory.removeLast().run();}else render();return;}if(!section.isEmpty()){section="";render();return;}if(tab!=0){navigate(0);return;}super.onBackPressed();}
     @Override public void onBackPressed(){goBack();}
     private void filterSources(){
         List<String> ids=new ArrayList<>(),names=new ArrayList<>();ids.add("");names.add(Texts.get(MainActivity.this,R.string.ui_all_sources));ids.add(LibraryFilter.LOCAL);names.add(getString(R.string.ui_local_files));ids.add("radio");names.add(Texts.get(this,R.string.ui_radio));
@@ -124,7 +145,7 @@ public final class MainActivity extends Activity {
         if(content==null)return;activePlaylist=-1;content.removeAllViews();detailShowing=false;detailHistory.clear();detailPage=null;heading.setText(new String[]{"SELFonium",Texts.get(MainActivity.this,R.string.ui_library),Texts.get(MainActivity.this,R.string.ui_search),Texts.get(MainActivity.this,R.string.ui_settings)}[tab]);
         sourceButton.setVisibility(tab==3?View.GONE:View.VISIBLE);sourceButton.active(!sourceFilter.isEmpty());sourceButton.setContentDescription(getString(R.string.ui_library_sources)+": "+(sourceFilter.isEmpty()?getString(R.string.ui_all_sources):sourceFilter.equals(LibraryFilter.LOCAL)?getString(R.string.ui_local_files):sourceName(sourceFilter)));
         subtitle.setText(Texts.get(MainActivity.this,R.string.ui_syncing));subtitle.setVisibility(syncing?View.VISIBLE:View.GONE);backButton.setVisibility(section.isEmpty()?View.GONE:View.VISIBLE);
-        for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?Ui.TONAL:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
+        for(int i=0;i<navigation.getChildCount();i++){LinearLayout cell=(LinearLayout)navigation.getChildAt(i);IconButton button=(IconButton)cell.getChildAt(0);cell.setSelected(i==tab);button.active(i==tab);button.setBackground(Ui.ripple(this,i==tab?Ui.TONAL:Ui.SURFACE,18));((TextView)cell.getChildAt(2)).setTextColor(i==tab?Ui.TEXT:Ui.MUTED);}
         switch(tab){case 0->home();case 1->libraryRoot();case 2->libraryPage();case 3->{if(section.equals("sources"))sources();else settingsPage();}}
     }
     private LinearLayout scroll(){ScrollView scroll=new ScrollView(this);scroll.setFillViewport(true);LinearLayout column=Ui.column(this);Ui.pad(column,16,8);scroll.addView(column);content.addView(scroll);return column;}
@@ -436,8 +457,8 @@ public final class MainActivity extends Activity {
     }
     private void settingsPage(){LinearLayout column=scroll();label(column,Texts.get(MainActivity.this,R.string.ui_personalization));settingRow(column,"language",getString(R.string.language_title),getString(R.string.language_summary),this::chooseLanguage);settingRow(column,"palette",Texts.get(MainActivity.this,R.string.ui_appearance),Texts.get(MainActivity.this,R.string.ui_accent_color_background_and_cover_grid),()->appearanceDialog=AppearanceDialog.show(this));label(column,Texts.get(MainActivity.this,R.string.ui_media_library));settingRow(column,"server",Texts.get(MainActivity.this,R.string.ui_music_sources),Texts.get(MainActivity.this,R.string.ui_servers_files_and_sync),this::openSources);settingRow(column,"download",Texts.get(this,R.string.ui_offline),Texts.get(MainActivity.this,R.string.ui_downloaded_tracks),()->openCategory("Офлайн"));
         label(column,Texts.get(MainActivity.this,R.string.ui_playback));settingRow(column,"equalizer",Texts.get(MainActivity.this,R.string.ui_equalizer),Texts.get(MainActivity.this,R.string.ui_bands_gain_and_presets),this::showEqualizer);settingRow(column,"play",Texts.get(MainActivity.this,R.string.ui_speed),settings.getFloat("speed",1)+"×",()->{String[] speeds={"0.75×","1×","1.25×","1.5×","2×"};float[] values={.75f,1f,1.25f,1.5f,2f};new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_playback_speed)).setItems(speeds,(d,at)->{settings.edit().putFloat("speed",values[at]).apply();render();}).show();});settingRow(column,"clock",Texts.get(MainActivity.this,R.string.ui_sleep_timer),Texts.get(MainActivity.this,R.string.ui_stop_playback_after_a_timer),this::sleep);
-        settingRow(column,"history",getString(R.string.scrobble_title),getString(R.string.scrobble_summary),()->scrobbleDialog=ScrobbleDialog.show(this,app.scrobbles));
-        label(column,getString(R.string.storage_title));settingRow(column,"folder",getString(R.string.storage_title),getString(R.string.storage_summary),()->storageDialog=StorageDialog.show(this,()->openCategory("Офлайн")));
+        settingRow(column,"history",getString(R.string.scrobble_title),getString(R.string.scrobble_summary),this::showScrobbling);
+        label(column,getString(R.string.storage_title));settingRow(column,"folder",getString(R.string.storage_title),getString(R.string.storage_summary),this::showStorage);
         label(column,getString(R.string.updates_title));settingRow(column,"download",getString(R.string.updates_settings),getString(R.string.updates_summary),this::showUpdates);
         Ui.space(column,24);TextView version=Ui.text(this,"SELFonium "+versionName(),12,Ui.MUTED);Ui.pad(version,16,8);column.addView(version);
     }

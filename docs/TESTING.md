@@ -61,6 +61,16 @@ Reproduced issues: rotating with the full player open dismisses it to the librar
 
 Network, app language, font scale, orientation and the original appearance/grid preferences were restored; playback was left paused. This was interactive smoke/regression testing, not instrumentation execution, audible quality assessment, TalkBack testing, Bluetooth/USB route validation, destructive storage testing or a full server/API compatibility run.
 
+## Version 0.6.7 rotation and font fixes
+
+The implementation now saves the open player, queue, equalizer, storage, listening-report and update screens in activity instance state. Stable IDs allow Android's native hierarchy state to restore scroll/list positions. Playback views wait for the Media3 controller and, for the full player, its current item. Restoration does not replay button actions or restart playback. Temporary action menus, confirmation prompts and unsaved appearance/source forms are outside this restoration scope.
+
+Bottom-navigation labels allow two lines and the bar grows with its content instead of clipping to a fixed height. Equalizer bands retain their text size and gain controls; the row scrolls horizontally when the labels need more room. The DSP and saved presets/gains are unchanged.
+
+`ScreenStateTest` adds Android checks for a parcelled scroll/list state round trip, omission of dismissed screens and measured Ukrainian navigation labels at 150% font scale on a 360 dp row. Main and instrumentation sources compile against cached Android dependencies with generated resource-ID substitutes; this is not instrumentation execution or APK validation. Host core/DSP/storage/localization and HTTP fixtures passed separately. No local APK was built or installed for these changes.
+
+After installing the signed release, repeat portrait→landscape→portrait with the player, queue above the player, storage after scrolling, equalizer after horizontal scrolling, listening reports and updates. Verify that the same screen remains open, Back dismisses the top screen, playback/position are unchanged, pending operations are not repeated, and long navigation labels remain readable at 130%/150% fonts. Also test process recreation with a saved queue and repeated rotation while its timeline is loading. The live-device evidence above applies to 0.6.6, not these fixes.
+
 ## Localization
 
 Run `bash scripts/test-core.sh` for language selection and resource checks, including all six language sets, format placeholders, plural categories and stable preset/navigation keys. The checks are offline and are also part of the existing CI build. They do not build an APK or emulate Android resource selection.

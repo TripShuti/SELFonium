@@ -24,6 +24,7 @@ final class UpdateDialog {
     private TextView last,status,check,download,details,notes,progressLabel,cancel;
     private LinearLayout available;private ProgressBar progress;private boolean awaitingPermission,foreground=true;private ReleaseInfo shown;
     private UpdateDialog(Activity activity,UpdateManager manager){this.activity=activity;this.manager=manager;dialog=Ui.screen(activity);}
+    Dialog window(){return dialog;}
     private String text(int id,Object...args){return activity.getString(id,args);}
     private String date(long when){return DateFormat.getDateTimeInstance(DateFormat.MEDIUM,DateFormat.SHORT,app.selfonium.locale.AppLanguage.locale(activity)).format(new Date(when));}
     private void open(){

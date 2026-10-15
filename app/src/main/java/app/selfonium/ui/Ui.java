@@ -34,6 +34,12 @@ final class Ui {
         view.setBackground(new RippleDrawable(ColorStateList.valueOf(0x33FFFFFF),shape(c,accent?ACCENT:SURFACE,12),null));
         view.setOnClickListener(v->action.run());view.setContentDescription(label);return view;
     }
+    static LinearLayout navigationItem(Context c,String name,String icon,boolean landscape,Runnable open){
+        LinearLayout cell=column(c);cell.setGravity(Gravity.CENTER);pad(cell,0,landscape?2:6);cell.setMinimumHeight(dp(c,landscape?56:64));
+        IconButton button=new IconButton(c,icon,name,open);cell.addView(button,new LinearLayout.LayoutParams(dp(c,56),dp(c,30)));space(cell,5);
+        TextView label=text(c,name,11,MUTED);label.setGravity(Gravity.CENTER);label.setSingleLine(false);label.setMaxLines(2);label.setEllipsize(android.text.TextUtils.TruncateAt.END);cell.addView(label,new LinearLayout.LayoutParams(-1,-2));
+        cell.setOnClickListener(v->open.run());cell.setContentDescription(name);cell.setFocusable(true);button.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);label.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);return cell;
+    }
     static RippleDrawable ripple(Context c,int color,int radius){return new RippleDrawable(ColorStateList.valueOf((ACCENT&0xFFFFFF)|0x33000000),shape(c,color,radius),null);}
     static android.app.Dialog screen(android.app.Activity activity){
         android.app.Dialog dialog=new android.app.Dialog(activity,android.R.style.Theme_Material_NoActionBar);

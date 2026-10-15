@@ -1,0 +1,5 @@
+<resources>
+    <item name="screen_scroll" type="id" />
+    <item name="screen_horizontal_scroll" type="id" />
+    <item name="screen_list" type="id" />
+</resources>

@@ -16,9 +16,13 @@
 - One-row library navigation, combined Local files filtering, removal of duplicate controls and distinct settings/source icons. Host checks and an Android 14 UI review are recorded separately from instrumentation execution.
 - Server now-playing reports and qualified listens with a bounded durable offline queue, optional OpenSubsonic timeline reports and user controls. An Android 14 offline-listen queue/retry check complements host fixtures; external server/scrobbler receipt remains unverified.
 
+## Version 0.6.7
+
+- Restore persistent player/settings screens and their viewports across activity recreation; adapt navigation labels and EQ band spacing to larger fonts. Host checks and Android source compilation passed; the new device/instrumentation regression checks remain pending.
+
 ## Next
 
-- Preserve open player/settings surfaces across rotation and improve large-font navigation/equalizer label spacing.
+- Validate 0.6.7 rotation, scroll restoration and large-font fixes on Android, including a queue restored after process recreation.
 - Extend 0.6.6 navigation/listening-report device coverage and verify server-side receipt on Navidrome; keep host and device evidence separate.
 - Extend the existing network/restart and screen/font checks with lifecycle, audio-focus, Bluetooth and minimum-Android regression coverage.
 - Continue Navidrome device testing and expand protocol fixtures for optional capabilities and server errors.

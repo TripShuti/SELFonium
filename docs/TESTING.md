@@ -13,7 +13,7 @@ Run commands from the repository root. Tests are grouped by what they actually v
 | `bash scripts/check-workflows.sh` | Workflow syntax, contexts and expressions via checksum-pinned actionlint |
 | `python3 scripts/check-repository.py` | Indexed-file publication policy and local Markdown paths, images and anchors |
 
-Java syntax parsing does not resolve Android types. SQLite tests execute extracted SQL in desktop SQLite, not Android SQLiteOpenHelper. HTTP fixtures stub credential storage, not the production HTTP client. The 3000-album fixture checks ordering, pagination, bounded concurrency and failed snapshots; its localhost timings are not a remote-server benchmark.
+Java syntax parsing does not resolve Android types. SQLite tests execute extracted SQL in desktop SQLite, not Android SQLiteOpenHelper. HTTP fixtures stub credential storage, not the production HTTP client. Fault-case album IDs bind each HTTP response and request count to its issuing scenario, so late cancelled requests cannot contaminate the next case. The 3000-album fixture checks ordering, pagination, bounded concurrency and failed snapshots; its localhost timings are not a remote-server benchmark.
 
 ## Android builds
 

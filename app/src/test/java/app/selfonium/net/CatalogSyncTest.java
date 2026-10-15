@@ -15,13 +15,9 @@ public final class CatalogSyncTest {
     static int checks;
     static volatile int albums=12,delay=35;
     static volatile String fault="";
+    static final ConcurrentMap<String,AtomicInteger> caseRequests=new ConcurrentHashMap<>();
     static final AtomicInteger active=new AtomicInteger(),maximum=new AtomicInteger(),requests=new AtomicInteger(),pages=new AtomicInteger();
     static void check(boolean condition){checks++;if(!condition)throw new AssertionError("Catalog check "+checks);}
-    static void quiet() throws Exception {
-        long end=System.nanoTime()+TimeUnit.SECONDS.toNanos(3);
-        while(active.get()>0&&System.nanoTime()<end)Thread.sleep(5);
-        check(active.get()==0);
-    }
     public static void main(String[] args) throws Exception {
         HttpServer server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);
         ExecutorService handlers=Executors.newFixedThreadPool(8);server.setExecutor(handlers);
@@ -44,13 +40,17 @@ public final class CatalogSyncTest {
                         pages.incrementAndGet();
                         if(!mode.equals("missing-list")){
                             int offset=mode.equals("repeat-page")?0:Integer.parseInt(query.get("offset"));
-                            JSONArray list=new JSONArray();for(int at=offset;at<Math.min(offset+500,albums);at++)list.put(new JSONObject().put("id","album-"+at));
+                            JSONArray list=new JSONArray();for(int at=offset;at<Math.min(offset+500,albums);at++)list.put(new JSONObject().put("id","album-"+(mode.isEmpty()?"":mode+"|")+at));
                             response.put("albumList2",new JSONObject().put("album",mode.equals("invalid-list")?"bad-sensitive-token":list));
                         }
                     }
                     case "getAlbum"->{
-                        albumRequest=true;requests.incrementAndGet();maximum.accumulateAndGet(active.incrementAndGet(),Math::max);
-                        int at=Integer.parseInt(query.get("id").substring(6));
+                        // Cancelled client workers may reach HTTP after the next case starts.
+                        // Bind their response and counter to the immutable ID issued by that case.
+                        String[] identity=query.get("id").substring(6).split("\\|",2);
+                        mode=identity.length==2?identity[0]:"";
+                        int at=Integer.parseInt(identity[identity.length-1]);
+                        albumRequest=true;requests.incrementAndGet();caseRequests.computeIfAbsent(mode,key->new AtomicInteger()).incrementAndGet();maximum.accumulateAndGet(active.incrementAndGet(),Math::max);
                         Thread.sleep(delay==0?0:delay+(2-at%3)*8L);
                         if(mode.equals("album-fails")&&at==1)response.put("status","failed").put("error",new JSONObject().put("code",70));
                         else {
@@ -89,10 +89,10 @@ public final class CatalogSyncTest {
             for(int at=0;at<tracks.size();at++)if(!tracks.get(at).remoteId.equals("song-"+at))throw new AssertionError("Unstable album order");
             System.out.println("MEASURE: 3000-album fixture="+TimeUnit.NANOSECONDS.toMillis(System.nanoTime()-start)+"ms, pages="+pages.get()+", max active album requests="+maximum.get());
             for(String mode:List.of("missing-list","invalid-list","invalid-songs","album-fails","repeat-page")){
-                quiet();fault=mode;albums=mode.equals("repeat-page")?501:12;requests.set(0);
+                fault=mode;albums=mode.equals("repeat-page")?501:12;requests.set(0);
                 try{client.synchronize(source,status->{});throw new AssertionError("Accepted partial/invalid snapshot: "+mode);}
                 catch(java.io.IOException|JSONException expected){check(true);}
-                quiet();if(mode.equals("album-fails"))check(requests.get()<=3);
+                if(mode.equals("album-fails"))check(caseRequests.get(mode).get()<=3);
             }
             albums=0;
             for(String mode:List.of("extensions-http","extensions-api","extensions-invalid","extensions-network")){

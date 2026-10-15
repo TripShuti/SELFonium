@@ -7,6 +7,7 @@
 - Restore open player, queue, equalizer, storage, listening-report and update screens across activity recreation, including scroll/list positions. Wait for the media controller and restored timeline before reopening playback views; never replay a destructive action.
 - Let bottom-navigation labels use two lines and grow the bar with larger fonts, retaining full accessible names and selected-tab state.
 - Give equalizer bands enough width for their gain labels and allow horizontal scrolling when they cannot fit. DSP, presets and stored gains are unchanged.
+- Isolate catalog fault-fixture responses and request counts from late HTTP requests belonging to earlier cancelled cases.
 - Record the Android 14 review of 0.6.6 and add Android regression coverage for native viewport state and large-font navigation. The new instrumentation tests require execution on a device/emulator.
 
 ## 0.6.6

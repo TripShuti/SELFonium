@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add Settings → Storage with private-data usage, device free space, offline totals and separate cache/temporary-file maintenance.
+- Add audio-cache limits and a next-track prefetch switch; defer active-cache cleanup and retain leased offline files.
+- Add a durable download queue, progress, cancellation, retry and Wi-Fi-only remote downloads using the existing foreground service.
+- Record size/SHA-256 for new offline copies, check downloads and offer damaged/missing tracks for re-download without deleting library entries.
+- Add host storage/cancellation fixtures, isolated Android storage tests and storage UI translations in all six languages.
+
 ## 0.6.4
 
 - Fix Media3 artist metadata localization for CharSequence values.

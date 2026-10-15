@@ -90,6 +90,16 @@ public final class UpdateManager {
             }catch(IOException e){if(candidate!=null)candidate.delete();verified.delete();Failure error=error(e,operation);main.post(()->fail(error));}
         });
     }
+    /** Enqueue cleanup on the updater worker; never race verification or installer handoff. */
+    public void cleanupStale(java.util.function.LongConsumer done){
+        worker.execute(()->{long removed=0;File[] files=directory.listFiles();
+            if(files!=null)for(File file:files){String name=file.getName();boolean temporary=name.equals("download.part")||name.equals("candidate.apk");
+                // A ready APK can be held by the system installer. Retain it until normal expiry.
+                boolean expired=name.equals("verified.apk")&&(state.stage==Stage.IDLE||state.stage==Stage.AVAILABLE)&&System.currentTimeMillis()-file.lastModified()>DAY;
+                if((temporary||expired)&&!java.nio.file.Files.isSymbolicLink(file.toPath())){long size=file.length();if(file.delete())removed+=size;}}
+            long result=removed;main.post(()->done.accept(result));
+        });
+    }
     public void cancel(){if(state.stage==Stage.DOWNLOADING&&cancel!=null)cancel.cancel();}
     public void prepareInstall(Consumer<File> ready){
         if(busy()||state.release==null)return;ReleaseInfo release=state.release;cancel=new UpdateHttp.Cancel();UpdateHttp.Cancel operation=cancel;

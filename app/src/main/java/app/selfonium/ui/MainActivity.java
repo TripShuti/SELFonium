@@ -3,6 +3,7 @@ package app.selfonium.ui;
 import app.selfonium.locale.Texts;
 import app.selfonium.locale.AppLanguage;
 import app.selfonium.R;
+import app.selfonium.data.DownloadRepository;
 
 import android.Manifest;
 import android.app.Activity;
@@ -34,7 +35,6 @@ import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Protocol;
 import app.selfonium.core.Source;
 import app.selfonium.core.Track;
-import app.selfonium.data.DownloadService;
 import app.selfonium.data.LocalMusic;
 import app.selfonium.data.Library;
 import app.selfonium.playback.PlaybackService;
@@ -49,13 +49,15 @@ public final class MainActivity extends Activity {
     private SharedPreferences settings;private final Handler handler=new Handler(Looper.getMainLooper());
     private LinearLayout root,mini,playerCard;private IconButton backButton;private boolean detailShowing;private int sortOrder;private FrameLayout content;private TextView heading,subtitle,miniTitle,miniArtist;private IconButton miniPlay,playerPlay,shuffleButton,repeatButton,favoriteButton;private CoverView miniCover;private ProgressBar miniProgress;private String miniId="";private boolean seeking;
     private TextView playerTitle,playerArtist,playerAlbum,playerTime,playerRemaining;private SeekBar playerSeek;private FrameLayout playerCover;private CoverView playerArtwork;private long activePlaylist=-1;
-    private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog,appearanceDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
+    private Dialog playerDialog,equalizerDialog,actionSheet,queueDialog,appearanceDialog,storageDialog;private String displayedId="",query="",category="Композиції",section="",sourceFilter="";
     private final Deque<Runnable> detailHistory=new ArrayDeque<>();private Runnable detailPage;
     private LinearLayout navigation;private String libraryCategory="Альбоми";private int tab;private List<Track> library=new ArrayList<>();private boolean syncing;
     private final java.util.function.Consumer<String> socialChanged=status->{
         if(isDestroyed())return;if(!status.isEmpty())message(status);updatePlayer();
         if(!detailShowing&&(section.equals("playlists")||category.equals("Улюблене")))reload();
     };
+    private String completedDownloads="";
+    private final Runnable offlineChanged=()->{String signature=app.downloads.entries().stream().filter(e->e.status()==DownloadRepository.Status.COMPLETE).map(e->e.id()).collect(java.util.stream.Collectors.joining("\n"));if(!signature.equals(completedDownloads)){completedDownloads=signature;if(tab==1&&category.equals("Офлайн"))reload();}};
     private Track pendingArtwork;
     private final Runnable bindArtwork=()->{Track track=pendingArtwork;if(track==null)return;miniCover.bind(track);if(playerArtwork!=null)playerArtwork.bind(track);};
     private void queueArtwork(Track track){pendingArtwork=track;handler.removeCallbacks(bindArtwork);handler.postDelayed(bindArtwork,300);}
@@ -74,9 +76,9 @@ public final class MainActivity extends Activity {
             });updatePlayer();}catch(Exception e){message(Texts.get(MainActivity.this,R.string.ui_could_not_connect_to_the_player));}
         },command->handler.post(command));
     }
-    @Override protected void onStart(){super.onStart();app.updates.foreground(true);app.updates.listen(updatesChanged);app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
-    @Override protected void onStop(){if(updateDialog!=null)updateDialog.onStop();app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
-    @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
+    @Override protected void onStart(){super.onStart();app.downloads.foreground(true);app.downloads.listen(offlineChanged);app.updates.foreground(true);app.updates.listen(updatesChanged);app.social.listen(socialChanged);app.social.requestFlush();app.social.refreshAll();handler.postDelayed(refreshSocial,60_000);handler.post(progress);}
+    @Override protected void onStop(){if(updateDialog!=null)updateDialog.onStop();app.updates.unlisten(updatesChanged);app.updates.foreground(false);app.downloads.foreground(false);app.downloads.unlisten(offlineChanged);app.social.unlisten(socialChanged);handler.removeCallbacks(refreshSocial);handler.removeCallbacks(progress);super.onStop();}
+    @Override protected void onDestroy(){if(updateDialog!=null)updateDialog.dismiss();handler.removeCallbacksAndMessages(null);if(playerDialog!=null)playerDialog.dismiss();if(equalizerDialog!=null)equalizerDialog.dismiss();if(actionSheet!=null)actionSheet.dismiss();if(queueDialog!=null)queueDialog.dismiss();if(appearanceDialog!=null)appearanceDialog.dismiss();if(storageDialog!=null)storageDialog.dismiss();if(controllerFuture!=null)MediaController.releaseFuture(controllerFuture);super.onDestroy();}
     @Override protected void onResume(){super.onResume();if(updateDialog!=null)updateDialog.onResume();}
     @Override public void onWindowFocusChanged(boolean focus){super.onWindowFocusChanged(focus);if(focus&&app!=null)updatesChanged.accept(app.updates.state());}
     @Override protected void onSaveInstanceState(Bundle state){state.putInt("tab",tab);state.putString("category",category);state.putString("section",section);state.putString("query",query);state.putString("libraryCategory",libraryCategory);super.onSaveInstanceState(state);}
@@ -202,7 +204,7 @@ public final class MainActivity extends Activity {
                 ScrollView recentScroll=new ScrollView(this);recentScroll.addView(prompt);results.addView(recentScroll);return;}
             List<Track> base=category.equals("Улюблене")?app.library.favorites():category.equals("Офлайн")?app.library.offlineTracks():visibleLibrary();
             List<Track> tracks=new ArrayList<>();for(Track t:base){boolean type=(!category.equals("Файли")||t.sourceId.equals("device")||t.sourceId.equals("files"))&&(!category.equals("Радіо")||t.sourceId.equals("radio"));if(type&&(sourceFilter.isEmpty()||sourceFilter.equals(t.sourceId))&&(t.title+" "+t.artist+" "+t.album).toLowerCase(Locale.ROOT).contains(needle))tracks.add(t);}
-            Comparator<Track> order=switch(sortOrder){case 1->Comparator.comparing(t->t.artist,String.CASE_INSENSITIVE_ORDER);case 2->Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number);case 3->Comparator.comparingLong(t->t.durationMs);default->Comparator.comparing(t->t.title,String.CASE_INSENSITIVE_ORDER);};tracks.sort(order);count.setText(Ui.tracks(MainActivity.this,tracks.size()));
+            Comparator<Track> order=switch(sortOrder){case 1->Comparator.comparing(t->t.artist,String.CASE_INSENSITIVE_ORDER);case 2->Comparator.comparing((Track t)->t.album,String.CASE_INSENSITIVE_ORDER).thenComparingInt(t->t.number);case 3->Comparator.comparingLong(t->t.durationMs);default->Comparator.comparing(t->t.title,String.CASE_INSENSITIVE_ORDER);};tracks.sort(order);count.setText(Ui.tracks(MainActivity.this,tracks.size()));if(category.equals("Офлайн")){List<Track> shown=new ArrayList<>(tracks);app.io.execute(()->{long bytes=0;for(Track t:shown){File file=new File(app.library.offline(t.id));if(app.offline.files.owns(file)&&file.isFile())bytes+=file.length();}long size=bytes;app.main.post(()->{if(count.isAttachedToWindow())count.setText(getString(R.string.storage_offline_summary,Ui.tracks(this,shown.size()),android.text.format.Formatter.formatShortFileSize(this,size)));});});}
             if(tracks.isEmpty()){results.addView(emptyState(searching?"search":"music",searching?Texts.get(MainActivity.this,R.string.ui_nothing_found):Texts.get(MainActivity.this,R.string.ui_nothing_here_yet),searching?Texts.get(MainActivity.this,R.string.ui_try_another_search_or_change_the_source):Texts.get(MainActivity.this,R.string.ui_add_music_or_change_the_source_filter),searching?"":Texts.get(MainActivity.this,R.string.ui_music_sources),searching?null:this::openSources));return;}
             if(category.equals("Альбоми")||category.equals("Виконавці")){
                 boolean albums=category.equals("Альбоми");LinkedHashMap<String,List<Track>> groups=new LinkedHashMap<>();
@@ -273,7 +275,7 @@ public final class MainActivity extends Activity {
             if(playlist.remote())app.social.remove(playlist,playlistPosition,track);else app.library.removeFromPlaylist(playlist.id(),track.id);
         },()->refreshPlaylist(playlist.id())));
         sheetAction(page,sheet,"plus",Texts.get(MainActivity.this,R.string.ui_add_to_playlist),()->choosePlaylist(track));boolean offline=!app.library.offline(track.id).isEmpty();
-        sheetAction(page,sheet,"download",offline?Texts.get(MainActivity.this,R.string.ui_delete_offline_copy):Texts.get(MainActivity.this,R.string.ui_download_offline),()->{if(!offline)download(track);else new AlertDialog.Builder(this).setMessage(Texts.get(MainActivity.this,R.string.ui_delete_the_downloaded_copy_the_original_stays)).setNegativeButton(Texts.get(MainActivity.this,R.string.ui_cancel),null).setPositiveButton(Texts.get(MainActivity.this,R.string.ui_delete_86),(x,y)->{new File(app.library.offline(track.id)).delete();app.library.offline(track.id,"");render();}).show();});
+        sheetAction(page,sheet,"download",offline?Texts.get(MainActivity.this,R.string.ui_delete_offline_copy):Texts.get(MainActivity.this,R.string.ui_download_offline),()->{if(!offline)download(track);else new AlertDialog.Builder(this).setMessage(Texts.get(MainActivity.this,R.string.ui_delete_the_downloaded_copy_the_original_stays)).setNegativeButton(Texts.get(MainActivity.this,R.string.ui_cancel),null).setPositiveButton(Texts.get(MainActivity.this,R.string.ui_delete_86),(x,y)->{app.storage.removeOne(track.id,removed->{if(!removed)message(getString(R.string.storage_retained,1));render();});}).show();});
         Ui.divider(page);sheetAction(page,sheet,"album",Texts.get(MainActivity.this,R.string.ui_go_to_album),()->{if(playerDialog!=null)playerDialog.dismiss();showAlbum(track);});
         sheetAction(page,sheet,"more",Texts.get(MainActivity.this,R.string.ui_information),()->new AlertDialog.Builder(this).setTitle(track.title).setMessage(track.artist+"\n"+track.album+Texts.get(MainActivity.this,R.string.ui_duration)+Protocol.time(track.durationMs)+Texts.get(MainActivity.this,R.string.ui_source)+sourceName(track.sourceId)).setPositiveButton(Texts.get(MainActivity.this,R.string.ui_done),null).show());
         ScrollView scroll=new ScrollView(this);scroll.addView(page);sheet.setContentView(scroll);sheet.show();Window window=sheet.getWindow();window.setBackgroundDrawable(new android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT));window.getDecorView().setPadding(0,0,0,0);window.setGravity(Gravity.BOTTOM);window.setLayout(-1,Math.min(dp(648),(int)(getResources().getDisplayMetrics().heightPixels*.82f)));window.setNavigationBarColor(Ui.SURFACE);
@@ -282,7 +284,7 @@ public final class MainActivity extends Activity {
         Runnable run=()->{sheet.dismiss();action.run();};LinearLayout row=Ui.row(this);row.setBackground(Ui.ripple(this,Ui.SURFACE,10));row.addView(icon(symbol,title,run),new LinearLayout.LayoutParams(dp(48),dp(48)));TextView label=Ui.text(this,title,14,Ui.TEXT);Ui.pad(label,8,0);row.addView(label,new LinearLayout.LayoutParams(0,-2,1));row.setOnClickListener(v->run.run());page.addView(row,new LinearLayout.LayoutParams(-1,dp(48)));
     }
     private String sourceName(String id){if(id.equals("device"))return Texts.get(MainActivity.this,R.string.ui_on_device);if(id.equals("files"))return Texts.get(MainActivity.this,R.string.ui_imported_files);if(id.equals("radio"))return Texts.get(this,R.string.ui_radio);try{Source s=app.sources.get(id);return s==null?Texts.get(MainActivity.this,R.string.ui_removed_source):s.name;}catch(Exception e){return Texts.get(MainActivity.this,R.string.ui_source_176);}}
-    private void download(Track track){if(track.sourceId.equals("radio")){message(Texts.get(MainActivity.this,R.string.ui_a_radio_stream_has_no_end_and));return;}notificationPermission();startForegroundService(new Intent(this,DownloadService.class).putExtra("track",track.id));message(Texts.get(MainActivity.this,R.string.ui_added_to_downloads));}
+    private void download(Track track){if(track.sourceId.equals("radio")){message(Texts.get(MainActivity.this,R.string.ui_a_radio_stream_has_no_end_and));return;}notificationPermission();app.downloads.enqueue(List.of(track.id));message(Texts.get(MainActivity.this,R.string.ui_added_to_downloads));}
     private void playlists(){
         heading.setText(Texts.get(this,R.string.ui_playlists));LinearLayout column=scroll();List<Library.Playlist> entries=app.library.playlistInfo();
         settingRow(column,"plus",Texts.get(MainActivity.this,R.string.ui_create_playlist),Texts.get(MainActivity.this,R.string.ui_on_this_phone_or_a_subsonic_server),()->newPlaylist(null));
@@ -434,6 +436,7 @@ public final class MainActivity extends Activity {
     }
     private void settingsPage(){LinearLayout column=scroll();label(column,Texts.get(MainActivity.this,R.string.ui_personalization));settingRow(column,"settings",getString(R.string.language_title),getString(R.string.language_summary),this::chooseLanguage);settingRow(column,"settings",Texts.get(MainActivity.this,R.string.ui_appearance),Texts.get(MainActivity.this,R.string.ui_accent_color_background_and_cover_grid),()->appearanceDialog=AppearanceDialog.show(this));label(column,Texts.get(MainActivity.this,R.string.ui_media_library));settingRow(column,"server",Texts.get(MainActivity.this,R.string.ui_music_sources),Texts.get(MainActivity.this,R.string.ui_servers_files_and_sync),this::openSources);settingRow(column,"download",Texts.get(this,R.string.ui_offline),Texts.get(MainActivity.this,R.string.ui_downloaded_tracks),()->openCategory("Офлайн"));
         label(column,Texts.get(MainActivity.this,R.string.ui_playback));settingRow(column,"equalizer",Texts.get(MainActivity.this,R.string.ui_equalizer),Texts.get(MainActivity.this,R.string.ui_bands_gain_and_presets),this::showEqualizer);settingRow(column,"play",Texts.get(MainActivity.this,R.string.ui_speed),settings.getFloat("speed",1)+"×",()->{String[] speeds={"0.75×","1×","1.25×","1.5×","2×"};float[] values={.75f,1f,1.25f,1.5f,2f};new AlertDialog.Builder(this).setTitle(Texts.get(MainActivity.this,R.string.ui_playback_speed)).setItems(speeds,(d,at)->{settings.edit().putFloat("speed",values[at]).apply();render();}).show();});settingRow(column,"clock",Texts.get(MainActivity.this,R.string.ui_sleep_timer),Texts.get(MainActivity.this,R.string.ui_stop_playback_after_a_timer),this::sleep);
+        label(column,getString(R.string.storage_title));settingRow(column,"folder",getString(R.string.storage_title),getString(R.string.storage_summary),()->storageDialog=StorageDialog.show(this,()->openCategory("Офлайн")));
         label(column,getString(R.string.updates_title));settingRow(column,"download",getString(R.string.updates_settings),getString(R.string.updates_summary),this::showUpdates);
         Ui.space(column,24);TextView version=Ui.text(this,"SELFonium "+versionName(),12,Ui.MUTED);Ui.pad(version,16,8);column.addView(version);
     }

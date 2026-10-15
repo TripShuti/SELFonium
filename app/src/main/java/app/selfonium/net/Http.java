@@ -32,14 +32,21 @@ public final class Http {
         public Map<String,java.util.List<String>> headers(){return response.headers().toMultimap();}
         @Override public void close(){response.close();}
     }
-    public static Response open(String method,String url,Map<String,String> headers,byte[] body) throws IOException {
+    public static final class Cancel {
+        private volatile boolean cancelled;private volatile okhttp3.Call call;
+        public void cancel(){cancelled=true;okhttp3.Call active=call;if(active!=null)active.cancel();}
+        public boolean cancelled(){return cancelled;}
+        private void attach(okhttp3.Call next)throws IOException{call=next;if(cancelled){next.cancel();throw new IOException("Cancelled");}}
+    }
+    public static Response open(String method,String url,Map<String,String> headers,byte[] body) throws IOException {return open(method,url,headers,body,null);}
+    public static Response open(String method,String url,Map<String,String> headers,byte[] body,Cancel cancel) throws IOException {
         String original=url;
         for(int redirects=0;redirects<6;redirects++) {
             if(Thread.currentThread().isInterrupted())throw new IOException("Операцію скасовано");
             Request.Builder builder=new Request.Builder().url(url).header("User-Agent","SELFonium/0.3");
             for(var entry:headers.entrySet())builder.header(entry.getKey(),entry.getValue());
             RequestBody requestBody=body==null?null:RequestBody.create(body,MediaType.get(headers.getOrDefault("Content-Type","application/octet-stream")));
-            okhttp3.Response response=CLIENT.newCall(builder.method(method,requestBody).build()).execute();
+            okhttp3.Call call=CLIENT.newCall(builder.method(method,requestBody).build());if(cancel!=null)cancel.attach(call);okhttp3.Response response=call.execute();
             int status=response.code();
             if(status>=300&&status<400) {
                 String location=response.header("Location");response.close();

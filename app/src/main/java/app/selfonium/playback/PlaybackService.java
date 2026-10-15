@@ -22,8 +22,6 @@ import androidx.media3.common.Player;
 import androidx.media3.common.Timeline;
 import androidx.media3.exoplayer.analytics.AnalyticsListener;
 import android.util.Log;
-import androidx.media3.datasource.DefaultDataSource;
-import androidx.media3.datasource.ResolvingDataSource;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.DefaultLoadControl;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
@@ -32,10 +30,7 @@ import androidx.media3.session.MediaSessionService;
 import app.selfonium.SelfoniumApp;
 import app.selfonium.core.Track;
 import app.selfonium.core.QueueRestore;
-import app.selfonium.net.SubsonicClient;
 import app.selfonium.ui.MainActivity;
-import java.io.File;
-import java.io.IOException;
 import org.json.JSONArray;
 
 @androidx.annotation.OptIn(markerClass = androidx.media3.common.util.UnstableApi.class)
@@ -65,19 +60,7 @@ public final class PlaybackService extends MediaSessionService {
     }
     @Override public void onCreate(){
         super.onCreate();getSharedPreferences("equalizer_caps",MODE_PRIVATE).edit().clear().apply();app=(SelfoniumApp)getApplication();prefs=getSharedPreferences("player",MODE_PRIVATE);EqualizerSettings.migrate(prefs);equalizer.settings(EqualizerSettings.read(prefs));
-        upstream=()->new ResolvingDataSource(new DefaultDataSource.Factory(this,SafeHttpDataSource::new).createDataSource(),new ResolvingDataSource.Resolver(){
-            private Uri original;
-            @Override public Uri resolveReportedUri(Uri uri){return original==null?uri:original;}
-            @Override public androidx.media3.datasource.DataSpec resolveDataSpec(androidx.media3.datasource.DataSpec spec) throws IOException {
-            original=spec.uri;
-            if(!"selfonium".equals(spec.uri.getScheme()))return spec;
-            String id=spec.uri.getLastPathSegment();Track track=app.library.get(id);if(track==null)throw new IOException("Композицію видалено з бібліотеки");
-            String local=app.library.offline(id);
-            if(!local.isEmpty()&&new File(local).isFile())return spec.withUri(Uri.fromFile(new File(local)));
-            try{SubsonicClient.Stream stream=app.subsonic.stream(track);return spec.withUri(Uri.parse(stream.url())).withRequestHeaders(stream.headers());}
-            catch(Exception e){throw new IOException("Не вдалося відкрити аудіо. Перевірте джерело або синхронізуйте його повторно.",e);}
-            }
-        });
+        upstream=()->new OfflineResolvingDataSource(this,app);
         DefaultRenderersFactory renderers=new DefaultRenderersFactory(this){@Override protected AudioSink buildAudioSink(android.content.Context context,boolean floatOutput,boolean playbackParameters){AudioSink sink=new DefaultAudioSink.Builder(context).setEnableFloatOutput(false).setEnableAudioTrackPlaybackParams(false).setAudioProcessors(new AudioProcessor[]{equalizer}).build();return new ForwardingAudioSink(sink){@Override public boolean supportsFormat(Format format){return MimeTypes.AUDIO_RAW.equals(format.sampleMimeType)&&super.supportsFormat(format);}@Override public int getFormatSupport(Format format){return MimeTypes.AUDIO_RAW.equals(format.sampleMimeType)?super.getFormatSupport(format):SINK_FORMAT_UNSUPPORTED;}};}};
         player=new ExoPlayer.Builder(this,renderers).setLoadControl(new DefaultLoadControl.Builder().setBufferDurationsMs(15_000,45_000,500,1500).setPrioritizeTimeOverSizeThresholds(true).build()).setMediaSourceFactory(new DefaultMediaSourceFactory(app.audio.cached(upstream))).build();
         player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon().setAudioOffloadPreferences(new TrackSelectionParameters.AudioOffloadPreferences.Builder().setAudioOffloadMode(TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED).build()).build());

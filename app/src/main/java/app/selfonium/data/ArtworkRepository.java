@@ -30,7 +30,7 @@ public final class ArtworkRepository {
     private final Context context;
     private final Library library;
     private final SubsonicClient subsonic;
-    private final File directory;
+    private final File directory;private volatile long cacheEpoch;
     private final Handler main = new Handler(Looper.getMainLooper());
     private final ThreadPoolExecutor workers = new ThreadPoolExecutor(3, 3, 30, TimeUnit.SECONDS,
             new ArrayBlockingQueue<>(128), new ThreadPoolExecutor.AbortPolicy());
@@ -52,6 +52,12 @@ public final class ArtworkRepository {
         this.context = context.getApplicationContext(); this.library = library; this.subsonic = subsonic;
         directory = new File(context.getCacheDir(), "artwork-v1");
     }
+    private synchronized void remember(String key,Bitmap bitmap,long epoch){if(epoch==cacheEpoch)memory.put(key,bitmap);}
+    public synchronized long clearCache(){
+        cacheEpoch++;memory.evictAll();retryFailures();long removed=0;
+        File[] entries=directory.listFiles();if(entries!=null)for(File file:entries)if(!java.nio.file.Files.isSymbolicLink(file.toPath())&&(file.getName().matches("[a-f0-9]{64}\\.img")||file.getName().matches("cover-.*\\.part"))){long size=file.length();if(file.delete())removed+=size;}
+        return removed;
+    }
     private String key(Track track) {
         return track.sourceId + "\n" + (track.artwork.isEmpty() ? "track:" + track.remoteId : "cover:" + track.artwork);
     }
@@ -71,11 +77,12 @@ public final class ArtworkRepository {
             if (waiting != null) { waiting.add(ticket);Runnable queued=jobs.get(key);if(urgent&&queued!=null&&workers.remove(queued)){try{foreground.execute(queued);}catch(RejectedExecutionException busy){finish(key,null);}}return ticket; }
             pending.put(key, new ArrayList<>(List.of(ticket)));
         }
+        long requestEpoch=cacheEpoch;
         Runnable job=() -> {
                 synchronized(pending){List<Ticket> listeners=pending.get(key);if(listeners==null||listeners.stream().noneMatch(t->t.callback!=null)){pending.remove(key);jobs.remove(key);return;}}
                 Bitmap result = null;
-                try { result = read(track, key); } catch (Exception ignored) { /* A missing cover never interrupts audio. */ }
-                if (result != null) memory.put(key, result);
+                try { result = read(track, key,requestEpoch); } catch (Exception ignored) { /* A missing cover never interrupts audio. */ }
+                if (result != null) remember(key,result,requestEpoch);
                 finish(key, result);
             };
         synchronized(pending){jobs.put(key,job);}
@@ -98,7 +105,7 @@ public final class ArtworkRepository {
     private File file(String key) throws Exception {
         return new File(directory, Protocol.hex(MessageDigest.getInstance("SHA-256").digest(key.getBytes(StandardCharsets.UTF_8))) + ".img");
     }
-    private Bitmap read(Track original, String key) throws Exception {
+    private Bitmap read(Track original, String key,long epoch) throws Exception {
         File cached = file(key);
         if (cached.isFile() && cached.length() <= MAX_BYTES) {
             Bitmap bitmap = decode(Files.readAllBytes(cached.toPath()));
@@ -144,12 +151,12 @@ public final class ArtworkRepository {
             String resolvedKey = key(track.withArtwork(artwork.reference()));
             Bitmap bitmap = decode(bytes);
             if (bitmap == null) return null;
-            memory.put(resolvedKey, bitmap);
-            write(resolvedKey, bytes); if (!key.equals(resolvedKey)) write(key, bytes);
+            remember(resolvedKey,bitmap,epoch);
+            write(resolvedKey, bytes,epoch); if (!key.equals(resolvedKey)) write(key, bytes,epoch);
             return bitmap;
         }
         Bitmap bitmap = decode(bytes);
-        if (bitmap != null) write(key, bytes);
+        if (bitmap != null) write(key, bytes,epoch);
         return bitmap;
     }
     private static Bitmap decode(byte[] bytes) {
@@ -162,7 +169,8 @@ public final class ArtworkRepository {
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length, options);
     }
-    private synchronized void write(String key, byte[] bytes) {
+    private synchronized void write(String key, byte[] bytes,long epoch) {
+        if(epoch!=cacheEpoch)return;
         try {
             if (!directory.isDirectory() && !directory.mkdirs()) return;
             File target = file(key), temporary = File.createTempFile("cover-", ".part", directory);

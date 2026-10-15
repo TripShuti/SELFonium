@@ -20,6 +20,9 @@ public final class SelfoniumApp extends Application {
     public ArtworkRepository artwork;
     public SocialSync social;
     public AudioRepository audio;
+    public app.selfonium.data.OfflineStore offline;
+    public app.selfonium.data.DownloadRepository downloads;
+    public app.selfonium.data.StorageRepository storage;
     public final ExecutorService catalog = Executors.newSingleThreadExecutor();
     public final ExecutorService sync = Executors.newSingleThreadExecutor();
     public final ExecutorService io = Executors.newSingleThreadExecutor();
@@ -32,12 +35,17 @@ public final class SelfoniumApp extends Application {
             if((getApplicationInfo().flags & android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE)!=0)android.util.Log.d("SELFoniumSubsonic",message);
         });
         artwork = new ArtworkRepository(this, library, subsonic);
+        offline=new app.selfonium.data.OfflineStore(this,library);
         audio=new AudioRepository(this,library,sources);
+        downloads=new app.selfonium.data.DownloadRepository(this);
+        storage=new app.selfonium.data.StorageRepository(this);
         social = new SocialSync(this);social.requestFlush();
         updates=new app.selfonium.update.UpdateManager(this);
         android.net.ConnectivityManager connectivity=getSystemService(android.net.ConnectivityManager.class);
         connectivity.registerDefaultNetworkCallback(new android.net.ConnectivityManager.NetworkCallback(){
-            @Override public void onAvailable(android.net.Network network){social.networkAvailable();}
+            @Override public void onAvailable(android.net.Network network){social.networkAvailable();main.post(downloads::networkChanged);}
+            @Override public void onCapabilitiesChanged(android.net.Network network,android.net.NetworkCapabilities capabilities){main.post(downloads::networkChanged);}
+            @Override public void onLost(android.net.Network network){main.post(downloads::networkChanged);}
         });
     }
 }

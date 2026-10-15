@@ -32,5 +32,6 @@ with tempfile.TemporaryDirectory(prefix='selfonium-provider-tests-') as temporar
     subprocess.run(['javac','--release','17','-cp',classpath,'-d',str(work),*files],check=True)
     subprocess.run(['java','-cp',str(work)+os.pathsep+classpath,'app.selfonium.net.ProviderSyncTest'],check=True)
     subprocess.run(['java','-cp',str(work)+os.pathsep+classpath,'app.selfonium.net.CatalogSyncTest'],check=True)
+    subprocess.run(['java','-cp',str(work)+os.pathsep+classpath,'app.selfonium.net.HttpCancelTest'],check=True)
 
     subprocess.run(['java','-cp',str(work)+os.pathsep+classpath,'app.selfonium.update.UpdateTest'],check=True)

@@ -17,7 +17,7 @@ def require(condition, message):
 def resources(language):
     folder = res / ('values' if language == 'en' else f'values-{language}')
     result = {}
-    for filename in ('strings.xml', 'updates.xml'):
+    for filename in ('strings.xml', 'updates.xml', 'storage.xml'):
         for item in ET.parse(folder / filename).getroot():
             key = (item.tag, item.get('name'))
             require(key not in result, f'Duplicate {language}: {key}')
